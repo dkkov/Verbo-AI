@@ -1,0 +1,26 @@
+# Render Blueprint для Verbo AI consultant.
+# Секреты (sync: false) задаются вручную в дашборде Render → Environment,
+# в репозиторий они не попадают.
+services:
+  - type: web
+    name: verbo-ai
+    runtime: python
+    plan: starter            # free уходит в сон; starter держит инстанс тёплым
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.6"
