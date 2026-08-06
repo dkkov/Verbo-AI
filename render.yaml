@@ -5,7 +5,9 @@ services:
   - type: web
     name: verbo-ai
     runtime: python
-    plan: starter            # free уходит в сон; starter держит инстанс тёплым
+    region: frankfurt         # ближайший к Supabase eu-west-3 (Париж)
+    plan: free                # бесплатный тариф; засыпает при простое (см. README).
+                              # для «всегда тёплого» инстанса поменяйте на: starter
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     healthCheckPath: /health
@@ -16,11 +18,13 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
-      - key: ADMIN_PASSWORD
-        sync: false
+      - key: GRADIO_ANALYTICS_ENABLED
+        value: "False"
       - key: PYTHON_VERSION
         value: "3.12.6"
