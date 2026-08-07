@@ -16,7 +16,7 @@ const I18N = {
     leadsTitle: "Заявки",
     leadsLoad: "Показать",
     passPh: "Пароль администратора",
-    servicesMeta: (n) => `${n} услуг`,
+    servicesMeta: (n) => (n ? `${n} услуг` : ""),
     waking: "Просыпаюсь после простоя, это займёт до минуты…",
     error: "Что-то пошло не так. Попробуйте ещё раз.",
     noLeads: "Заявок пока нет.",
@@ -32,7 +32,7 @@ const I18N = {
     leadsTitle: "Leads",
     leadsLoad: "Show",
     passPh: "Admin password",
-    servicesMeta: (n) => `${n} services`,
+    servicesMeta: (n) => (n ? `${n} services` : ""),
     waking: "Waking up from sleep, this can take up to a minute…",
     error: "Something went wrong. Please try again.",
     noLeads: "No leads yet.",
@@ -284,7 +284,8 @@ function init() {
     })
   );
 
-  bootstrap();
+  applyLang(); // мгновенно рисуем кнопки действий и тексты, не дожидаясь сервера
+  bootstrap(); // догружает услуги/историю/сессию с сервера
 }
 
 document.addEventListener("DOMContentLoaded", init);
