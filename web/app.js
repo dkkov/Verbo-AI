@@ -3,14 +3,14 @@
    ============================================================ */
 "use strict";
 
+const LOGO_URL = "/assets/logo.png"; // если файла нет — тихо остаётся «V»
+
 const I18N = {
   ru: {
     tagline: "Онлайн-школа английского · AI-консультант",
     heroTitle: "Чем могу помочь?",
     heroSub: "Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.",
     servicesTitle: "Услуги и цены",
-    examplesTitle: "Быстрые вопросы",
-    examplesMeta: "примеры вопросов",
     inputPh: "Спросите о ценах, часах или запишитесь на пробное…",
     disclaimer: "Verbo AI · отвечает по базе знаний школы",
     leadsTitle: "Заявки",
@@ -20,14 +20,13 @@ const I18N = {
     waking: "Просыпаюсь после простоя, это займёт до минуты…",
     error: "Что-то пошло не так. Попробуйте ещё раз.",
     noLeads: "Заявок пока нет.",
+    backName: (n) => `С возвращением, ${n}! Чем могу помочь дальше?`,
   },
   en: {
     tagline: "Online English school · AI assistant",
     heroTitle: "How can I help?",
     heroSub: "Ask about prices, formats and schedule — or book a free trial lesson.",
     servicesTitle: "Services & pricing",
-    examplesTitle: "Quick questions",
-    examplesMeta: "example questions",
     inputPh: "Ask about prices, hours, or book a trial…",
     disclaimer: "Verbo AI · answers from the school knowledge base",
     leadsTitle: "Leads",
@@ -37,13 +36,30 @@ const I18N = {
     waking: "Waking up from sleep, this can take up to a minute…",
     error: "Something went wrong. Please try again.",
     noLeads: "No leads yet.",
+    backName: (n) => `Welcome back, ${n}! How can I help?`,
   },
 };
+
+const ACTIONS = [
+  { icon: "💰",
+    ru: { label: "Цены и форматы", sub: "сколько стоит обучение", q: "Расскажите о ценах и форматах занятий" },
+    en: { label: "Prices & formats", sub: "how much it costs", q: "Tell me about prices and lesson formats" } },
+  { icon: "✍️",
+    ru: { label: "Записаться на пробное", sub: "бесплатно, 30 минут", q: "Хочу записаться на бесплатное пробное занятие" },
+    en: { label: "Book a trial", sub: "free, 30 minutes", q: "I want to book a free trial lesson" } },
+  { icon: "🎯",
+    ru: { label: "Подготовка к IELTS", sub: "курс и преподаватель", q: "Расскажите про подготовку к IELTS" },
+    en: { label: "IELTS prep", sub: "course & teacher", q: "Tell me about IELTS preparation" } },
+  { icon: "❄️",
+    ru: { label: "Условия и заморозка", sub: "оплата, отмена, пауза", q: "Какие условия оплаты, отмены и заморозки занятий?" },
+    en: { label: "Terms & freeze", sub: "payment, cancellation", q: "What are the payment, cancellation and freeze terms?" } },
+];
 
 const state = {
   sessionId: localStorage.getItem("verbo_sid") || "",
   lang: localStorage.getItem("verbo_lang") || "ru",
   services: [],
+  hasLogo: false,
   busy: false,
 };
 
@@ -54,23 +70,47 @@ const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.cla
 function applyLang() {
   const t = I18N[state.lang];
   document.documentElement.lang = state.lang;
-  document.querySelectorAll("[data-i18n]").forEach((n) => {
-    const key = n.dataset.i18n;
-    if (t[key]) n.textContent = t[key];
-  });
-  document.querySelectorAll("[data-i18n-ph]").forEach((n) => {
-    const key = n.dataset.i18nPh;
-    if (t[key]) n.placeholder = t[key];
-  });
+  document.querySelectorAll("[data-i18n]").forEach((n) => { if (t[n.dataset.i18n]) n.textContent = t[n.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-ph]").forEach((n) => { if (t[n.dataset.i18nPh]) n.placeholder = t[n.dataset.i18nPh]; });
   $("#services-meta").textContent = t.servicesMeta(state.services.length);
-  document.querySelectorAll(".lang__btn").forEach((b) =>
-    b.classList.toggle("is-active", b.dataset.lang === state.lang)
-  );
+  document.querySelectorAll(".lang__btn").forEach((b) => b.classList.toggle("is-active", b.dataset.lang === state.lang));
+  renderActions();
 }
 
-/* ---------- Рендер услуг и примеров ---------- */
+/* ---------- Логотип / иллюстрация ---------- */
+function probeLogo() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { state.hasLogo = true; setupLogo(); resolve(); };
+    img.onerror = () => { state.hasLogo = false; resolve(); };
+    img.src = LOGO_URL;
+  });
+}
+function setupLogo() {
+  const bl = $("#brand-logo");
+  bl.classList.add("has-img");
+  bl.innerHTML = `<img src="${LOGO_URL}" alt="Verbo" />`;
+  $("#hero-img").src = LOGO_URL;
+  $("#hero-art").hidden = false;
+}
+
+/* ---------- Кнопки действий ---------- */
+function renderActions() {
+  const box = $("#actions");
+  box.innerHTML = "";
+  ACTIONS.forEach((a) => {
+    const t = a[state.lang];
+    const btn = el("button", "action"); btn.type = "button";
+    btn.innerHTML =
+      `<div class="action__icon">${a.icon}</div>` +
+      `<div><div class="action__label">${t.label}</div><div class="action__sub">${t.sub}</div></div>`;
+    btn.addEventListener("click", () => { $("#input").value = t.q; send(); });
+    box.append(btn);
+  });
+}
+
+/* ---------- Услуги ---------- */
 function renderServices(services) {
-  const body = $("#services-body");
   const inner = el("div", "card__body-inner");
   services.forEach((s) => {
     const row = el("div", "service");
@@ -82,35 +122,29 @@ function renderServices(services) {
     row.append(left, price);
     inner.append(row);
   });
-  body.innerHTML = "";
-  body.append(inner);
-}
-
-function renderExamples(examples) {
-  const body = $("#examples-body");
-  const inner = el("div", "card__body-inner");
-  const chips = el("div", "chips");
-  examples.forEach((q) => {
-    const chip = el("button", "chip"); chip.type = "button"; chip.textContent = q;
-    chip.addEventListener("click", () => { $("#input").value = q; send(); });
-    chips.append(chip);
-  });
-  inner.append(chips);
+  const body = $("#services-body");
   body.innerHTML = "";
   body.append(inner);
 }
 
 /* ---------- Аккордеоны ---------- */
 function initAccordions() {
-  document.querySelectorAll(".card__head").forEach((head) => {
-    head.addEventListener("click", () => head.closest(".card").classList.toggle("is-open"));
-  });
+  document.querySelectorAll(".card__head").forEach((head) =>
+    head.addEventListener("click", () => head.closest(".card").classList.toggle("is-open"))
+  );
 }
 
 /* ---------- Сообщения ---------- */
+function botAvatar() {
+  const av = el("div", "msg__avatar" + (state.hasLogo ? " has-img" : ""));
+  av.innerHTML = state.hasLogo ? `<img src="${LOGO_URL}" alt="" />` : "V";
+  return av;
+}
+
 function addMessage(role, text) {
   $("#hero").classList.add("is-hidden");
   const msg = el("div", `msg ${role === "user" ? "user" : "bot"}`);
+  if (role !== "user") msg.append(botAvatar());
   const bubble = el("div", "bubble"); bubble.textContent = text;
   msg.append(bubble);
   $("#chat").append(msg);
@@ -120,10 +154,9 @@ function addMessage(role, text) {
 
 function addTyping() {
   const msg = el("div", "msg bot"); msg.id = "typing-msg";
+  msg.append(botAvatar());
   const bubble = el("div", "bubble");
-  const dots = el("div", "typing");
-  dots.innerHTML = "<span></span><span></span><span></span>";
-  bubble.append(dots);
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
   msg.append(bubble);
   $("#chat").append(msg);
   scrollDown();
@@ -148,10 +181,9 @@ async function send() {
   addMessage("user", text);
 
   const typing = addTyping();
-  // Подсказка про холодный старт, если ответ долго не приходит.
   const wakeTimer = setTimeout(() => {
     const b = typing.querySelector(".bubble");
-    if (b) { b.innerHTML = ""; b.textContent = I18N[state.lang].waking; }
+    if (b) b.textContent = I18N[state.lang].waking;
   }, 7000);
 
   try {
@@ -195,13 +227,11 @@ async function bootstrap() {
     state.services = data.services || [];
 
     renderServices(state.services);
-    renderExamples(data.examples || []);
     applyLang();
 
-    // Восстанавливаем прошлый диалог.
     if (Array.isArray(data.history) && data.history.length) {
       data.history.forEach((m) => addMessage(m.role === "assistant" ? "bot" : "user", m.content));
-      if (data.name) addMessage("bot", `С возвращением, ${data.name}! Чем могу помочь дальше?`);
+      if (data.name) addMessage("bot", I18N[state.lang].backName(data.name));
     }
   } catch (e) {
     console.error("bootstrap failed", e);
@@ -211,8 +241,8 @@ async function bootstrap() {
 
 /* ---------- Админ «Заявки» ---------- */
 function initAdmin() {
-  $("#admin-fab").addEventListener("click", () => $("#admin-modal").hidden = false);
-  $("#admin-close").addEventListener("click", () => $("#admin-modal").hidden = true);
+  $("#admin-fab").addEventListener("click", () => ($("#admin-modal").hidden = false));
+  $("#admin-close").addEventListener("click", () => ($("#admin-modal").hidden = true));
   $("#admin-modal").addEventListener("click", (e) => { if (e.target.id === "admin-modal") $("#admin-modal").hidden = true; });
   $("#admin-load").addEventListener("click", loadLeads);
 }
@@ -266,7 +296,8 @@ function init() {
     })
   );
 
-  bootstrap();
+  // Сначала пробуем логотип (чтобы аватары/иллюстрация были готовы), затем данные.
+  probeLogo().finally(bootstrap);
 }
 
 document.addEventListener("DOMContentLoaded", init);

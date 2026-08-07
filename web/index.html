@@ -16,7 +16,7 @@
     <!-- Шапка -->
     <header class="topbar">
       <div class="brand">
-        <div class="brand__logo">V</div>
+        <div class="brand__logo" id="brand-logo"><span>V</span></div>
         <div class="brand__text">
           <div class="brand__name">Verbo</div>
           <div class="brand__sub" data-i18n="tagline">Онлайн-школа английского · AI-консультант</div>
@@ -30,13 +30,19 @@
 
     <!-- Основная область -->
     <main class="main" id="main">
-      <!-- Приветствие (скрывается после первого сообщения) -->
+      <!-- Онбординг (скрывается после первого сообщения) -->
       <section class="hero" id="hero">
+        <div class="hero__art" id="hero-art" hidden>
+          <img id="hero-img" alt="English" />
+        </div>
         <div class="hero__wave">👋</div>
         <h1 class="hero__title" data-i18n="heroTitle">Чем могу помочь?</h1>
         <p class="hero__sub" data-i18n="heroSub">Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.</p>
 
-        <!-- Аккордеоны -->
+        <!-- Крупные кнопки действий -->
+        <div class="actions" id="actions"></div>
+
+        <!-- Аккордеон услуг -->
         <div class="cards">
           <div class="card" id="card-services">
             <button class="card__head" data-acc="services">
@@ -47,17 +53,6 @@
               <span class="card__chev" aria-hidden="true">⌄</span>
             </button>
             <div class="card__body" id="services-body"></div>
-          </div>
-
-          <div class="card" id="card-examples">
-            <button class="card__head" data-acc="examples">
-              <div class="card__label">
-                <span class="card__title" data-i18n="examplesTitle">Быстрые вопросы</span>
-                <span class="card__meta" data-i18n="examplesMeta">примеры вопросов</span>
-              </div>
-              <span class="card__chev" aria-hidden="true">⌄</span>
-            </button>
-            <div class="card__body" id="examples-body"></div>
           </div>
         </div>
       </section>
