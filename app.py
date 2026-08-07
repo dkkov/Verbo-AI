@@ -273,6 +273,11 @@ def leads(body: LeadsIn):
         return JSONResponse({"error": "Ошибка загрузки заявок."}, status_code=500)
 
 
+# Корректный MIME для шрифтов (иначе StaticFiles отдаёт woff2 как text/plain).
+import mimetypes  # noqa: E402
+
+mimetypes.add_type("font/woff2", ".woff2")
+
 # Статический фронтенд монтируем ПОСЛЕДНИМ, чтобы /health и /api/* имели приоритет.
 # html=True отдаёт index.html на "/" и обслуживает style.css / app.js.
 app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
