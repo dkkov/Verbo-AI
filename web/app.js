@@ -90,8 +90,6 @@ function setupLogo() {
   const bl = $("#brand-logo");
   bl.classList.add("has-img");
   bl.innerHTML = `<img src="${LOGO_URL}" alt="Verbo" />`;
-  $("#hero-img").src = LOGO_URL;
-  $("#hero-art").hidden = false;
 }
 
 /* ---------- Кнопки действий ---------- */
