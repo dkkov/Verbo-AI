@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verbo — AI-консультант школы английского</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"></div>
+
+  <div class="app">
+    <!-- Шапка -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__logo">V</div>
+        <div class="brand__text">
+          <div class="brand__name">Verbo</div>
+          <div class="brand__sub" data-i18n="tagline">Онлайн-школа английского · AI-консультант</div>
+        </div>
+      </div>
+      <div class="lang" role="group" aria-label="Language">
+        <button class="lang__btn is-active" data-lang="ru">RU</button>
+        <button class="lang__btn" data-lang="en">EN</button>
+      </div>
+    </header>
+
+    <!-- Основная область -->
+    <main class="main" id="main">
+      <!-- Приветствие (скрывается после первого сообщения) -->
+      <section class="hero" id="hero">
+        <div class="hero__wave">👋</div>
+        <h1 class="hero__title" data-i18n="heroTitle">Чем могу помочь?</h1>
+        <p class="hero__sub" data-i18n="heroSub">Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.</p>
+
+        <!-- Аккордеоны -->
+        <div class="cards">
+          <div class="card" id="card-services">
+            <button class="card__head" data-acc="services">
+              <div class="card__label">
+                <span class="card__title" data-i18n="servicesTitle">Услуги и цены</span>
+                <span class="card__meta" id="services-meta"></span>
+              </div>
+              <span class="card__chev" aria-hidden="true">⌄</span>
+            </button>
+            <div class="card__body" id="services-body"></div>
+          </div>
+
+          <div class="card" id="card-examples">
+            <button class="card__head" data-acc="examples">
+              <div class="card__label">
+                <span class="card__title" data-i18n="examplesTitle">Быстрые вопросы</span>
+                <span class="card__meta" data-i18n="examplesMeta">примеры вопросов</span>
+              </div>
+              <span class="card__chev" aria-hidden="true">⌄</span>
+            </button>
+            <div class="card__body" id="examples-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Лента сообщений -->
+      <section class="chat" id="chat" aria-live="polite"></section>
+    </main>
+
+    <!-- Ввод -->
+    <footer class="composer">
+      <div class="composer__inner">
+        <textarea id="input" rows="1" placeholder="Спросите о ценах, часах или запишитесь на визит…" data-i18n-ph="inputPh"></textarea>
+        <button id="send" class="send" aria-label="Отправить">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+      <div class="composer__hint" data-i18n="disclaimer">Verbo AI · отвечает по базе знаний школы</div>
+    </footer>
+  </div>
+
+  <!-- Кнопка и модалка «Заявки» -->
+  <button class="admin-fab" id="admin-fab" title="Заявки" aria-label="Заявки">☰</button>
+  <div class="modal" id="admin-modal" hidden>
+    <div class="modal__box">
+      <div class="modal__head">
+        <span data-i18n="leadsTitle">Заявки</span>
+        <button class="modal__close" id="admin-close" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body" id="admin-body">
+        <input type="password" id="admin-pass" placeholder="Пароль администратора" data-i18n-ph="passPh" />
+        <button class="btn" id="admin-load" data-i18n="leadsLoad">Показать</button>
+        <div class="admin-status" id="admin-status"></div>
+        <div class="admin-table" id="admin-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

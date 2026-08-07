@@ -24,7 +24,5 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
-      - key: GRADIO_ANALYTICS_ENABLED
-        value: "False"
       - key: PYTHON_VERSION
         value: "3.12.6"
