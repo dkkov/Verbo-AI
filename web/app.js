@@ -59,7 +59,7 @@ const state = {
   sessionId: localStorage.getItem("verbo_sid") || "",
   lang: localStorage.getItem("verbo_lang") || "ru",
   services: [],
-  hasLogo: false,
+  hasLogo: true, // лого вписан прямо в HTML — аватары бота тоже используют его
   busy: false,
 };
 
@@ -75,21 +75,6 @@ function applyLang() {
   $("#services-meta").textContent = t.servicesMeta(state.services.length);
   document.querySelectorAll(".lang__btn").forEach((b) => b.classList.toggle("is-active", b.dataset.lang === state.lang));
   renderActions();
-}
-
-/* ---------- Логотип / иллюстрация ---------- */
-function probeLogo() {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => { state.hasLogo = true; setupLogo(); resolve(); };
-    img.onerror = () => { state.hasLogo = false; resolve(); };
-    img.src = LOGO_URL;
-  });
-}
-function setupLogo() {
-  const bl = $("#brand-logo");
-  bl.classList.add("has-img");
-  bl.innerHTML = `<img src="${LOGO_URL}" alt="Verbo" />`;
 }
 
 /* ---------- Кнопки действий ---------- */
@@ -239,9 +224,14 @@ async function bootstrap() {
 
 /* ---------- Админ «Заявки» ---------- */
 function initAdmin() {
-  $("#admin-fab").addEventListener("click", () => ($("#admin-modal").hidden = false));
-  $("#admin-close").addEventListener("click", () => ($("#admin-modal").hidden = true));
-  $("#admin-modal").addEventListener("click", (e) => { if (e.target.id === "admin-modal") $("#admin-modal").hidden = true; });
+  const modal = $("#admin-modal");
+  // Панель заявок открывается только по адресу с #admin — для посетителей её нет.
+  const sync = () => { modal.hidden = location.hash.toLowerCase() !== "#admin"; };
+  const close = () => { modal.hidden = true; if (location.hash.toLowerCase() === "#admin") history.replaceState(null, "", location.pathname); };
+  window.addEventListener("hashchange", sync);
+  sync();
+  $("#admin-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target.id === "admin-modal") close(); });
   $("#admin-load").addEventListener("click", loadLeads);
 }
 
@@ -294,8 +284,7 @@ function init() {
     })
   );
 
-  // Сначала пробуем логотип (чтобы аватары/иллюстрация были готовы), затем данные.
-  probeLogo().finally(bootstrap);
+  bootstrap();
 }
 
 document.addEventListener("DOMContentLoaded", init);
