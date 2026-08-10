@@ -92,7 +92,8 @@ body {
   justify-content: space-between;
   padding: 20px 4px 14px;
 }
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand__text { min-width: 0; }
 .brand__logo {
   width: 42px; height: 42px;
   border-radius: 13px;
@@ -102,7 +103,7 @@ body {
   box-shadow: var(--shadow-glow);
 }
 .brand__name { font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
-.brand__sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.brand__sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .lang {
   display: flex; gap: 2px;
@@ -243,7 +244,7 @@ body {
 .typing span:nth-child(3) { animation-delay: 0.4s; }
 
 /* ---------- Ввод ---------- */
-.composer { padding: 10px 4px 18px; }
+.composer { padding: 10px 4px calc(18px + env(safe-area-inset-bottom, 0px)); }
 .composer__inner {
   display: flex; align-items: flex-end; gap: 10px;
   background: var(--surface);
@@ -402,5 +403,8 @@ body {
   .hero__title { font-size: 30px; }
   .actions { grid-template-columns: 1fr; }
   #input { font-size: 14px; }
-  .composer { padding: 8px 2px 14px; }
+  .composer { padding: 8px 2px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .topbar { padding: 16px 2px 12px; }
+  .brand__sub { display: none; } /* на телефоне шапка компактная: логотип + Verbo */
+  .brand__name { font-size: 20px; }
 }
