@@ -258,9 +258,11 @@ body {
 }
 #input {
   flex: 1;
+  min-width: 0; /* чтобы flex-элемент мог сжиматься и не распирал строку */
   background: transparent; border: 0; outline: 0; resize: none;
   color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5;
   max-height: 140px; padding: 8px 0;
+  white-space: nowrap; overflow: hidden; /* подсказка в одну строку, без обрезки по высоте */
 }
 #input::placeholder { color: var(--faint); }
 .send {
@@ -399,4 +401,6 @@ body {
   .bubble { max-width: 84%; }
   .hero__title { font-size: 30px; }
   .actions { grid-template-columns: 1fr; }
+  #input { font-size: 14px; }
+  .composer { padding: 8px 2px 14px; }
 }

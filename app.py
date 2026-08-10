@@ -195,6 +195,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Verbo AI consultant", lifespan=lifespan)
 
+
+@app.middleware("http")
+async def no_cache_for_pages(request, call_next):
+    """
+    HTML/CSS/JS отдаём с no-cache, чтобы после деплоя браузер всегда брал
+    свежую версию (через revalidation), а не показывал старую из кэша.
+    Шрифты/картинки кэшируются как обычно — они меняются редко.
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith((".html", ".css", ".js")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 
