@@ -33,7 +33,7 @@
   --border-2:  rgba(255, 255, 255, 0.14);
   --text:      #eef0f6;
   --muted:     #9aa1b4;
-  --faint:     #6b7085;
+  --faint:     #838a9e;
 
   --indigo:    #6366f1;
   --indigo-2:  #818cf8;
@@ -58,6 +58,19 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;
+}
+
+/* Доступность: быстрый тап на мобильном + видимый фокус для клавиатуры */
+button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation; }
+.action:focus-visible,
+.chip:focus-visible,
+.card__head:focus-visible,
+.lang__btn:focus-visible,
+.send:focus-visible,
+.btn:focus-visible,
+.modal__close:focus-visible {
+  outline: 2px solid var(--indigo-2);
+  outline-offset: 2px;
 }
 
 /* Фоновое свечение */
@@ -114,9 +127,10 @@ body {
 }
 .lang__btn {
   border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; min-height: 34px;
   background: transparent; color: var(--muted);
   font-family: var(--font); font-weight: 700; font-size: 12.5px;
-  padding: 6px 13px; border-radius: 999px;
+  padding: 6px 14px; border-radius: 999px;
   transition: all 0.2s ease;
 }
 .lang__btn.is-active { background: var(--grad); color: #fff; box-shadow: var(--shadow-glow); }
@@ -135,7 +149,8 @@ body {
 /* ---------- Приветствие ---------- */
 .hero { padding: 22px 2px 8px; animation: rise 0.5s ease both; }
 .hero.is-hidden { display: none; }
-.hero__wave { font-size: 30px; }
+.hero__wave { color: var(--indigo-2); line-height: 0; }
+.hero__wave svg { width: 30px; height: 30px; }
 .hero__title {
   font-size: clamp(28px, 6vw, 40px);
   font-weight: 800; letter-spacing: -0.03em;
@@ -268,7 +283,7 @@ body {
 #input::placeholder { color: var(--faint); }
 .send {
   flex-shrink: 0;
-  width: 42px; height: 42px; border: 0; cursor: pointer;
+  width: 44px; height: 44px; border: 0; cursor: pointer;
   border-radius: 13px; background: var(--grad); color: #fff;
   display: grid; place-items: center;
   box-shadow: var(--shadow-glow);
@@ -371,10 +386,12 @@ body {
 .action__icon {
   width: 38px; height: 38px; flex-shrink: 0;
   display: grid; place-items: center;
-  font-size: 19px; border-radius: 11px;
+  border-radius: 11px;
+  color: var(--indigo-2);
   background: rgba(99, 102, 241, 0.16);
   border: 1px solid rgba(99, 102, 241, 0.28);
 }
+.action__icon svg { width: 20px; height: 20px; }
 .action__label { font-weight: 700; font-size: 14px; }
 .action__sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
 
@@ -402,9 +419,10 @@ body {
   .bubble { max-width: 84%; }
   .hero__title { font-size: 30px; }
   .actions { grid-template-columns: 1fr; }
-  #input { font-size: 14px; }
+  #input { font-size: 16px; } /* >=16px, иначе iOS зумит при фокусе */
   .composer { padding: 8px 2px calc(14px + env(safe-area-inset-bottom, 0px)); }
   .topbar { padding: 16px 2px 12px; }
   .brand__sub { display: none; } /* на телефоне шапка компактная: логотип + Verbo */
   .brand__name { font-size: 20px; }
+  .lang__btn { min-height: 44px; } /* тач-цель на телефоне */
 }
