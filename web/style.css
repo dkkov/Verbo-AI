@@ -433,6 +433,53 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
   * { animation: none !important; transition: none !important; }
 }
 
+/* ---------- Голосовой режим (полноэкранный «звонок») ---------- */
+.voice {
+  position: fixed; inset: 0; z-index: 30;
+  background: radial-gradient(70% 55% at 50% 34%, rgba(99, 102, 241, 0.20), transparent 70%), var(--bg);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+}
+.voice[hidden] { display: none; }
+.voice__top { color: var(--muted); font-size: 13px; font-weight: 600; padding-top: env(safe-area-inset-top, 0px); }
+.voice__center { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 7vh; }
+.voice__orb {
+  width: 168px; height: 168px; border: 0; padding: 0; cursor: pointer;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a5b4fc, #6366f1 46%, #7c3aed 100%);
+  box-shadow: 0 0 60px -6px rgba(99, 102, 241, 0.65), inset 0 0 40px rgba(255, 255, 255, 0.15);
+  transition: transform 0.09s ease-out;
+  animation: orbidle 3s ease-in-out infinite;
+}
+.voice__orb.is-speaking { animation: orbspeak 1s ease-in-out infinite; }
+.voice__orb.is-thinking { animation: orbidle 1.3s ease-in-out infinite; opacity: 0.85; }
+@keyframes orbidle {
+  0%, 100% { box-shadow: 0 0 60px -6px rgba(99, 102, 241, 0.55), inset 0 0 40px rgba(255, 255, 255, 0.15); }
+  50% { box-shadow: 0 0 82px 0 rgba(99, 102, 241, 0.9), inset 0 0 40px rgba(255, 255, 255, 0.22); }
+}
+@keyframes orbspeak {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.voice__status { color: var(--text); font-size: 17px; font-weight: 600; }
+.voice__log {
+  flex: 1 1 auto; width: 100%; max-width: 560px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px; margin: 22px 0; padding: 0 2px;
+  scrollbar-width: thin; scrollbar-color: var(--border-2) transparent;
+}
+.voice__msg { display: flex; animation: rise 0.3s ease both; }
+.voice__msg.user { justify-content: flex-end; }
+.voice__bub { max-width: 80%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.45; }
+.voice__msg.user .voice__bub { background: var(--grad); color: #fff; }
+.voice__msg.bot .voice__bub { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+.voice__end {
+  flex: 0 0 auto; cursor: pointer; font-family: var(--font); font-weight: 700; font-size: 14px;
+  color: var(--text); background: var(--surface-2); border: 1px solid var(--border-2);
+  padding: 12px 22px; border-radius: 999px; min-height: 44px;
+  transition: all 0.18s ease;
+}
+.voice__end:hover { border-color: #ef4444; color: #fff; background: #ef4444; }
+
 /* ---------- Адаптив ---------- */
 @media (max-width: 560px) {
   .app { padding: 0 14px; }

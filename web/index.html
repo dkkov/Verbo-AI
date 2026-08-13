@@ -90,6 +90,17 @@
     </div>
   </div>
 
+  <!-- Полноэкранный голосовой режим («звонок») -->
+  <div class="voice" id="voice-overlay" hidden>
+    <div class="voice__top">Verbo · голосовой режим</div>
+    <div class="voice__center">
+      <button class="voice__orb" id="voice-orb" aria-label="Говорить"></button>
+      <div class="voice__status" id="voice-status">Говорите…</div>
+    </div>
+    <div class="voice__log" id="voice-log" aria-live="polite"></div>
+    <button class="voice__end" id="voice-end">✕ Завершить</button>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

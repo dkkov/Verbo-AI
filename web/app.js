@@ -208,65 +208,138 @@ function autoGrow() {
   input.style.height = Math.min(input.scrollHeight, 140) + "px";
 }
 
-/* ---------- Голосовой ввод ---------- */
-const rec = { recording: false, mr: null, chunks: [], stream: null };
+/* ---------- Голосовой режим («звонок», хендсфри) ---------- */
+const VM = {
+  active: false, ctx: null, stream: null, analyser: null, source: null, buf: null,
+  mr: null, chunks: [], hadSpeech: false, silenceStart: 0, listenStart: 0,
+  audioEl: null, raf: null, state: "idle",
+};
 
-async function toggleMic() {
-  if (state.busy) return;
-  if (rec.recording) { stopMic(); return; }
+async function openVoiceMode() {
+  if (VM.active) return;
   try {
-    rec.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    rec.chunks = [];
-    rec.mr = new MediaRecorder(rec.stream);
-    rec.mr.ondataavailable = (e) => { if (e.data && e.data.size) rec.chunks.push(e.data); };
-    rec.mr.onstop = onRecStop;
-    rec.mr.start();
-    rec.recording = true;
-    $("#mic").classList.add("is-recording");
+    VM.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (e) {
     addMessage("bot", "Не удалось получить доступ к микрофону — разрешите его в браузере и попробуйте снова.");
+    return;
+  }
+  VM.active = true;
+  $("#voice-log").innerHTML = "";
+  $("#voice-overlay").hidden = false;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  VM.ctx = new AC();
+  VM.source = VM.ctx.createMediaStreamSource(VM.stream);
+  VM.analyser = VM.ctx.createAnalyser();
+  VM.analyser.fftSize = 1024;
+  VM.buf = new Uint8Array(VM.analyser.fftSize);
+  VM.source.connect(VM.analyser);
+  startListening();
+  loopOrb();
+}
+
+function closeVoiceMode() {
+  VM.active = false;
+  if (VM.raf) cancelAnimationFrame(VM.raf);
+  try { if (VM.mr && VM.mr.state === "recording") VM.mr.stop(); } catch (e) { /* ignore */ }
+  if (VM.audioEl) { try { VM.audioEl.pause(); } catch (e) { /* ignore */ } }
+  if (VM.stream) VM.stream.getTracks().forEach((t) => t.stop());
+  if (VM.ctx) { try { VM.ctx.close(); } catch (e) { /* ignore */ } }
+  $("#voice-overlay").hidden = true;
+}
+
+function setVoiceState(s) {
+  VM.state = s;
+  const map = { listening: "Говорите…", thinking: "Думаю…", speaking: "Отвечаю…" };
+  const st = $("#voice-status");
+  if (st) st.textContent = map[s] || "";
+  const orb = $("#voice-orb");
+  if (orb) {
+    orb.classList.toggle("is-speaking", s === "speaking");
+    orb.classList.toggle("is-thinking", s === "thinking");
+    if (s !== "listening") orb.style.transform = ""; // во время речи/раздумий — CSS-анимация
   }
 }
 
-function stopMic() {
-  if (rec.mr && rec.recording) {
-    rec.recording = false;
-    $("#mic").classList.remove("is-recording");
-    rec.mr.stop();
-  }
-}
-
-async function onRecStop() {
-  if (rec.stream) rec.stream.getTracks().forEach((t) => t.stop());
-  const blob = new Blob(rec.chunks, { type: rec.chunks[0] ? rec.chunks[0].type : "audio/webm" });
-  if (blob.size < 1200) return; // слишком короткая запись — игнор
-
-  state.busy = true;
-  $("#send").disabled = true;
-  $("#mic").disabled = true;
-  const typing = addTyping();
-
+function startListening() {
+  if (!VM.active) return;
+  VM.chunks = []; VM.hadSpeech = false; VM.silenceStart = 0; VM.listenStart = performance.now();
   try {
-    const wavB64 = await blobToWavBase64(blob);
+    VM.mr = new MediaRecorder(VM.stream);
+    VM.mr.ondataavailable = (e) => { if (e.data && e.data.size) VM.chunks.push(e.data); };
+    VM.mr.onstop = onUtterance;
+    VM.mr.start();
+  } catch (e) { return; }
+  setVoiceState("listening");
+}
+
+// Цикл: раздувает шар под громкость и детектит конец речи (пауза).
+function loopOrb() {
+  if (!VM.active) return;
+  VM.analyser.getByteTimeDomainData(VM.buf);
+  let sum = 0;
+  for (let i = 0; i < VM.buf.length; i++) { const v = (VM.buf[i] - 128) / 128; sum += v * v; }
+  const rms = Math.sqrt(sum / VM.buf.length);
+
+  const orb = $("#voice-orb");
+  if (orb && VM.state === "listening") orb.style.transform = "scale(" + (1 + Math.min(rms * 2.5, 0.55)) + ")";
+
+  if (VM.state === "listening") {
+    const now = performance.now();
+    const SPEECH = 0.045, SIL_MS = 1100, MAX_MS = 15000;
+    if (rms > SPEECH) { VM.hadSpeech = true; VM.silenceStart = 0; }
+    else if (VM.hadSpeech) {
+      if (!VM.silenceStart) VM.silenceStart = now;
+      else if (now - VM.silenceStart > SIL_MS) finishUtterance();
+    }
+    if (VM.hadSpeech && now - VM.listenStart > MAX_MS) finishUtterance();
+  }
+  VM.raf = requestAnimationFrame(loopOrb);
+}
+
+function finishUtterance() {
+  if (VM.mr && VM.mr.state === "recording") { setVoiceState("thinking"); VM.mr.stop(); }
+}
+
+async function onUtterance() {
+  if (!VM.active) return;
+  const blob = new Blob(VM.chunks, { type: VM.chunks[0] ? VM.chunks[0].type : "audio/webm" });
+  if (!VM.hadSpeech || blob.size < 1500) { startListening(); return; } // не было речи — слушаем дальше
+  try {
+    const wav = await blobToWavBase64(blob);
     const res = await fetch("/api/voice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: state.sessionId, audio: wavB64, mime: "audio/wav" }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: state.sessionId, audio: wav, mime: "audio/wav" }),
     });
     const data = await res.json();
     if (data.session_id) { state.sessionId = data.session_id; localStorage.setItem("verbo_sid", data.session_id); }
-    typing.remove();
-    if (data.transcript) addMessage("user", data.transcript);
-    addMessage("bot", data.reply || I18N[state.lang].error);
-    if (data.audio) playAudio(data.audio);
+    if (!VM.active) return;
+    if (data.transcript) addVoiceMsg("user", data.transcript);
+    addVoiceMsg("bot", data.reply || "…");
+    if (data.audio) await speakVoice(data.audio);
   } catch (e) {
-    typing.remove();
-    addMessage("bot", I18N[state.lang].error);
-  } finally {
-    state.busy = false;
-    $("#send").disabled = false;
-    $("#mic").disabled = false;
+    if (VM.active) addVoiceMsg("bot", "Ошибка связи. Попробуйте ещё раз.");
   }
+  if (VM.active) startListening(); // снова слушаем — непрерывный диалог
+}
+
+function speakVoice(b64) {
+  return new Promise((resolve) => {
+    setVoiceState("speaking");
+    const a = new Audio("data:audio/wav;base64," + b64);
+    VM.audioEl = a;
+    a.onended = resolve; a.onerror = resolve;
+    a.play().catch(() => resolve());
+  });
+}
+
+function addVoiceMsg(role, text) {
+  const wrap = el("div", "voice__msg " + (role === "user" ? "user" : "bot"));
+  const bub = el("div", "voice__bub");
+  bub.textContent = (role === "user" ? "Вы: " : "Ассистент: ") + text;
+  wrap.append(bub);
+  const log = $("#voice-log");
+  log.append(wrap);
+  requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
 }
 
 // Декодируем запись (webm/mp4/opus) и перекодируем в WAV 16кГц моно — Gemini его точно принимает.
@@ -404,7 +477,10 @@ function init() {
   initAdmin();
 
   $("#send").addEventListener("click", send);
-  $("#mic").addEventListener("click", toggleMic);
+  $("#mic").addEventListener("click", openVoiceMode);
+  $("#voice-end").addEventListener("click", closeVoiceMode);
+  // Тап по шару — ручной «стоп записи» (подстраховка, если пауза не поймалась).
+  $("#voice-orb").addEventListener("click", () => { if (VM.state === "listening") finishUtterance(); });
   $("#input").addEventListener("input", autoGrow);
   $("#input").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
