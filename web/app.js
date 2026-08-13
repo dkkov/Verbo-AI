@@ -242,7 +242,6 @@ function closeVoiceMode() {
   if (VM.raf) cancelAnimationFrame(VM.raf);
   try { if (VM.mr && VM.mr.state === "recording") VM.mr.stop(); } catch (e) { /* ignore */ }
   if (VM.audioEl) { try { VM.audioEl.pause(); } catch (e) { /* ignore */ } }
-  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
   if (VM.stream) VM.stream.getTracks().forEach((t) => t.stop());
   if (VM.ctx) { try { VM.ctx.close(); } catch (e) { /* ignore */ } }
   $("#voice-overlay").hidden = true;
@@ -316,8 +315,7 @@ async function onUtterance() {
     if (!VM.active) return;
     if (data.transcript) addVoiceMsg("user", data.transcript);
     addVoiceMsg("bot", data.reply || "…");
-    if (data.audio) await speakVoice(data.audio);          // премиальный голос Gemini
-    else if (data.reply) await speakFallback(data.reply);  // фолбэк: голос браузера
+    if (data.audio) await speakVoice(data.audio); // голос Gemini (при недоступном TTS — только текст)
   } catch (e) {
     if (VM.active) addVoiceMsg("bot", "Ошибка связи. Попробуйте ещё раз.");
   }
@@ -331,24 +329,6 @@ function speakVoice(b64) {
     VM.audioEl = a;
     a.onended = resolve; a.onerror = resolve;
     a.play().catch(() => resolve());
-  });
-}
-
-// Фолбэк-озвучка голосом браузера (когда Gemini-TTS недоступен: квота/ошибка).
-function speakFallback(text) {
-  return new Promise((resolve) => {
-    try {
-      if (!("speechSynthesis" in window)) return resolve();
-      setVoiceState("speaking");
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = state.lang === "en" ? "en-US" : "ru-RU";
-      const vs = window.speechSynthesis.getVoices() || [];
-      const match = vs.find((v) => v.lang && v.lang.toLowerCase().startsWith(u.lang.slice(0, 2)));
-      if (match) u.voice = match;
-      u.onend = resolve; u.onerror = resolve;
-      window.speechSynthesis.speak(u);
-    } catch (e) { resolve(); }
   });
 }
 
