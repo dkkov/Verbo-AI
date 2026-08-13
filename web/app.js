@@ -3,11 +3,9 @@
    ============================================================ */
 "use strict";
 
-const LOGO_URL = "/assets/logo.png"; // если файла нет — тихо остаётся «V»
-
 const I18N = {
   ru: {
-    tagline: "Онлайн-школа английского · AI-консультант",
+    tagline: "Онлайн-школа английского · с 2019",
     heroTitle: "Чем могу помочь?",
     heroSub: "Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.",
     servicesTitle: "Услуги и цены",
@@ -23,7 +21,7 @@ const I18N = {
     backName: (n) => `С возвращением, ${n}! Чем могу помочь дальше?`,
   },
   en: {
-    tagline: "Online English school · AI assistant",
+    tagline: "Online English school · since 2019",
     heroTitle: "How can I help?",
     heroSub: "Ask about prices, formats and schedule — or book a free trial lesson.",
     servicesTitle: "Services & pricing",
@@ -69,7 +67,6 @@ const state = {
   sessionId: localStorage.getItem("verbo_sid") || "",
   lang: localStorage.getItem("verbo_lang") || "ru",
   services: [],
-  hasLogo: true, // лого вписан прямо в HTML — аватары бота тоже используют его
   busy: false,
 };
 
@@ -128,16 +125,9 @@ function initAccordions() {
 }
 
 /* ---------- Сообщения ---------- */
-function botAvatar() {
-  const av = el("div", "msg__avatar" + (state.hasLogo ? " has-img" : ""));
-  av.innerHTML = state.hasLogo ? `<img src="${LOGO_URL}" alt="" />` : "V";
-  return av;
-}
-
 function addMessage(role, text) {
   $("#hero").classList.add("is-hidden");
   const msg = el("div", `msg ${role === "user" ? "user" : "bot"}`);
-  if (role !== "user") msg.append(botAvatar());
   const bubble = el("div", "bubble"); bubble.textContent = text;
   msg.append(bubble);
   $("#chat").append(msg);
@@ -147,7 +137,6 @@ function addMessage(role, text) {
 
 function addTyping() {
   const msg = el("div", "msg bot"); msg.id = "typing-msg";
-  msg.append(botAvatar());
   const bubble = el("div", "bubble");
   bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
   msg.append(bubble);

@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verbo — AI-консультант школы английского</title>
-  <link rel="preload" href="/assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/assets/fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/assets/fonts/playfair-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/assets/fonts/plexmono-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -15,11 +16,8 @@
     <!-- Шапка -->
     <header class="topbar">
       <div class="brand">
-        <div class="brand__logo has-img" id="brand-logo"><img src="/assets/logo.png" alt="Verbo" /></div>
-        <div class="brand__text">
-          <div class="brand__name">Verbo</div>
-          <div class="brand__sub" data-i18n="tagline">Онлайн-школа английского · AI-консультант</div>
-        </div>
+        <div class="brand__eyebrow" data-i18n="tagline">Онлайн-школа английского · с 2019</div>
+        <div class="brand__name">Verbo</div>
       </div>
       <div class="lang" role="group" aria-label="Language">
         <button class="lang__btn is-active" data-lang="ru">RU</button>
@@ -31,10 +29,8 @@
     <main class="main" id="main">
       <!-- Онбординг (скрывается после первого сообщения) -->
       <section class="hero" id="hero">
-        <div class="hero__wave" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
-        </div>
         <h1 class="hero__title" data-i18n="heroTitle">Чем могу помочь?</h1>
+        <div class="hero__rule" aria-hidden="true"></div>
         <p class="hero__sub" data-i18n="heroSub">Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.</p>
 
         <!-- Крупные кнопки действий -->
