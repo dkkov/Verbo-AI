@@ -321,6 +321,7 @@ def voice(body: VoiceIn):
         audio_b64 = base64.b64encode(voice_mod.synthesize(reply)).decode()
     except Exception as e:  # noqa: BLE001
         log.warning("Сбой озвучки (TTS), отдаю только текст: %s", e)
+        db.insert_log(session_id, "error", {"where": "voice_tts", "error": str(e)[:300]})
 
     return {"transcript": transcript, "reply": reply, "audio": audio_b64, "session_id": session_id}
 
