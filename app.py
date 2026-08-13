@@ -15,6 +15,7 @@ app.py — оркестрация ответа + HTTP-слой (FastAPI) и ка
 """
 import os
 import uuid
+import base64
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -33,6 +34,7 @@ import judge
 import db
 from tools import build_create_lead_tool, run_create_lead
 from llm import generate, text_from_response, to_contents, function_calls
+import voice as voice_mod
 
 # --------------------------------------------------------------------------- #
 # Контент интерфейса                                                          #
@@ -222,6 +224,12 @@ class LeadsIn(BaseModel):
     password: str
 
 
+class VoiceIn(BaseModel):
+    session_id: str
+    audio: str  # WAV в base64 (записан в браузере)
+    mime: str = "audio/wav"
+
+
 @app.get("/health")
 def health():
     """Лёгкий healthcheck для Render — всегда 200, не завязан на внешние сервисы."""
@@ -270,6 +278,51 @@ def chat(body: ChatIn):
         reply = ERROR_REPLY
 
     return {"reply": reply, "session_id": session_id}
+
+
+@app.post("/api/voice")
+def voice(body: VoiceIn):
+    """
+    Голос поверх бота: аудио → STT (Gemini) → generate_reply → TTS (Gemini).
+    Возвращает распознанный текст, ответ и его озвучку (WAV в base64).
+    Синхронный def — FastAPI выполнит в пуле потоков.
+    """
+    session_id = body.session_id or str(uuid.uuid4())
+
+    # 1. Распознавание речи.
+    try:
+        audio_bytes = base64.b64decode(body.audio)
+        transcript = voice_mod.transcribe(audio_bytes, body.mime)
+    except Exception as e:  # noqa: BLE001
+        log.error("Сбой распознавания речи: %s", e)
+        db.insert_log(session_id, "error", {"where": "voice_stt", "error": str(e)})
+        return {"transcript": "", "reply": ERROR_REPLY, "audio": "", "session_id": session_id}
+
+    transcript = (transcript or "").strip()
+    if not transcript:
+        return {
+            "transcript": "",
+            "reply": "Извините, не расслышал. Скажите ещё раз, пожалуйста.",
+            "audio": "",
+            "session_id": session_id,
+        }
+
+    # 2. Тот же пайплайн, что и у текста.
+    try:
+        reply = generate_reply(session_id, transcript)
+    except Exception as e:  # noqa: BLE001
+        log.error("Сбой генерации ответа (voice): %s", e)
+        db.insert_log(session_id, "error", {"where": "voice_reply", "error": str(e)})
+        reply = ERROR_REPLY
+
+    # 3. Озвучка ответа. Если TTS упал — деградируем до текста без звука.
+    audio_b64 = ""
+    try:
+        audio_b64 = base64.b64encode(voice_mod.synthesize(reply)).decode()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Сбой озвучки (TTS), отдаю только текст: %s", e)
+
+    return {"transcript": transcript, "reply": reply, "audio": audio_b64, "session_id": session_id}
 
 
 @app.post("/api/leads")

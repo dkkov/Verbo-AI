@@ -208,6 +208,129 @@ function autoGrow() {
   input.style.height = Math.min(input.scrollHeight, 140) + "px";
 }
 
+/* ---------- Голосовой ввод ---------- */
+const rec = { recording: false, mr: null, chunks: [], stream: null };
+
+async function toggleMic() {
+  if (state.busy) return;
+  if (rec.recording) { stopMic(); return; }
+  try {
+    rec.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    rec.chunks = [];
+    rec.mr = new MediaRecorder(rec.stream);
+    rec.mr.ondataavailable = (e) => { if (e.data && e.data.size) rec.chunks.push(e.data); };
+    rec.mr.onstop = onRecStop;
+    rec.mr.start();
+    rec.recording = true;
+    $("#mic").classList.add("is-recording");
+  } catch (e) {
+    addMessage("bot", "Не удалось получить доступ к микрофону — разрешите его в браузере и попробуйте снова.");
+  }
+}
+
+function stopMic() {
+  if (rec.mr && rec.recording) {
+    rec.recording = false;
+    $("#mic").classList.remove("is-recording");
+    rec.mr.stop();
+  }
+}
+
+async function onRecStop() {
+  if (rec.stream) rec.stream.getTracks().forEach((t) => t.stop());
+  const blob = new Blob(rec.chunks, { type: rec.chunks[0] ? rec.chunks[0].type : "audio/webm" });
+  if (blob.size < 1200) return; // слишком короткая запись — игнор
+
+  state.busy = true;
+  $("#send").disabled = true;
+  $("#mic").disabled = true;
+  const typing = addTyping();
+
+  try {
+    const wavB64 = await blobToWavBase64(blob);
+    const res = await fetch("/api/voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: state.sessionId, audio: wavB64, mime: "audio/wav" }),
+    });
+    const data = await res.json();
+    if (data.session_id) { state.sessionId = data.session_id; localStorage.setItem("verbo_sid", data.session_id); }
+    typing.remove();
+    if (data.transcript) addMessage("user", data.transcript);
+    addMessage("bot", data.reply || I18N[state.lang].error);
+    if (data.audio) playAudio(data.audio);
+  } catch (e) {
+    typing.remove();
+    addMessage("bot", I18N[state.lang].error);
+  } finally {
+    state.busy = false;
+    $("#send").disabled = false;
+    $("#mic").disabled = false;
+  }
+}
+
+// Декодируем запись (webm/mp4/opus) и перекодируем в WAV 16кГц моно — Gemini его точно принимает.
+async function blobToWavBase64(blob) {
+  const buf = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  const audio = await ctx.decodeAudioData(buf);
+  ctx.close();
+  return arrayBufferToBase64(encodeWav(audio, 16000));
+}
+
+function encodeWav(audioBuffer, targetRate) {
+  let data = audioBuffer.getChannelData(0);
+  if (audioBuffer.numberOfChannels > 1) {
+    const d2 = audioBuffer.getChannelData(1);
+    const mixed = new Float32Array(data.length);
+    for (let i = 0; i < data.length; i++) mixed[i] = (data[i] + d2[i]) / 2;
+    data = mixed;
+  }
+  const down = downsample(data, audioBuffer.sampleRate, targetRate);
+  const out = new ArrayBuffer(44 + down.length * 2);
+  const view = new DataView(out);
+  const wr = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  wr(0, "RIFF"); view.setUint32(4, 36 + down.length * 2, true); wr(8, "WAVE"); wr(12, "fmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, targetRate, true); view.setUint32(28, targetRate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true); wr(36, "data");
+  view.setUint32(40, down.length * 2, true);
+  let off = 44;
+  for (let i = 0; i < down.length; i++) {
+    const s = Math.max(-1, Math.min(1, down[i]));
+    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    off += 2;
+  }
+  return out;
+}
+
+function downsample(data, srcRate, dstRate) {
+  if (dstRate >= srcRate) return data;
+  const ratio = srcRate / dstRate;
+  const len = Math.floor(data.length / ratio);
+  const out = new Float32Array(len);
+  for (let i = 0; i < len; i++) out[i] = data[Math.floor(i * ratio)];
+  return out;
+}
+
+function arrayBufferToBase64(buf) {
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function playAudio(b64) {
+  try {
+    const a = new Audio("data:audio/wav;base64," + b64);
+    a.play().catch(() => {}); // если автоплей заблокирован — текст всё равно показан
+  } catch (e) { /* ignore */ }
+}
+
 /* ---------- Bootstrap ---------- */
 async function bootstrap() {
   try {
@@ -281,6 +404,7 @@ function init() {
   initAdmin();
 
   $("#send").addEventListener("click", send);
+  $("#mic").addEventListener("click", toggleMic);
   $("#input").addEventListener("input", autoGrow);
   $("#input").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
