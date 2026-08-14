@@ -94,6 +94,13 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
   font-family: var(--serif); font-size: 27px; font-weight: 600;
   letter-spacing: 0.01em; margin-top: 5px; color: var(--ivory); line-height: 1;
 }
+.topbar__right { display: flex; align-items: center; gap: 16px; }
+.hbtn {
+  width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center;
+}
+.hbtn svg { width: 17px; height: 17px; }
+.hbtn:hover { color: var(--ivory); border-color: var(--brass); }
 .lang { display: flex; gap: 18px; align-items: center; }
 .lang__btn {
   border: 0; cursor: pointer; background: transparent; color: var(--faint);
@@ -277,11 +284,11 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
 
 /* Press feedback (#1): тактильный отклик на нажатие. Поздний блок — чтобы transform
    не перебивался transition'ами компонентов выше. */
-.action, .card__head, .lang__btn, .send, .mic, .btn, .voice__end {
+.action, .card__head, .lang__btn, .send, .mic, .btn, .voice__end, .hbtn {
   transition: transform 140ms var(--ease-out), background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 .action:active, .card__head:active, .lang__btn:active,
-.send:active, .mic:active, .btn:active, .voice__end:active { transform: scale(0.97); }
+.send:active, .mic:active, .btn:active, .voice__end:active, .hbtn:active { transform: scale(0.97); }
 
 /* ---------- Анимации ---------- */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

@@ -13,6 +13,7 @@ const I18N = {
     disclaimer: "Verbo AI · отвечает по базе знаний школы",
     leadsTitle: "Заявки",
     leadsLoad: "Показать",
+    newChat: "Новый чат",
     passPh: "Пароль администратора",
     servicesMeta: (n) => (n ? `${n} услуг` : ""),
     waking: "Просыпаюсь после простоя, это займёт до минуты…",
@@ -29,6 +30,7 @@ const I18N = {
     disclaimer: "Verbo AI · answers from the school knowledge base",
     leadsTitle: "Leads",
     leadsLoad: "Show",
+    newChat: "New chat",
     passPh: "Admin password",
     servicesMeta: (n) => (n ? `${n} services` : ""),
     waking: "Waking up from sleep, this can take up to a minute…",
@@ -79,6 +81,7 @@ function applyLang() {
   document.documentElement.lang = state.lang;
   document.querySelectorAll("[data-i18n]").forEach((n) => { if (t[n.dataset.i18n]) n.textContent = t[n.dataset.i18n]; });
   document.querySelectorAll("[data-i18n-ph]").forEach((n) => { if (t[n.dataset.i18nPh]) n.placeholder = t[n.dataset.i18nPh]; });
+  document.querySelectorAll("[data-i18n-title]").forEach((n) => { const v = t[n.dataset.i18nTitle]; if (v) { n.title = v; n.setAttribute("aria-label", v); } });
   $("#services-meta").textContent = t.servicesMeta(state.services.length);
   document.querySelectorAll(".lang__btn").forEach((b) => b.classList.toggle("is-active", b.dataset.lang === state.lang));
   renderActions();
@@ -466,6 +469,18 @@ async function loadLeads() {
   }
 }
 
+/* ---------- Новый чат (сброс сессии) ---------- */
+function newChat() {
+  state.sessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+  localStorage.setItem("verbo_sid", state.sessionId);
+  $("#chat").innerHTML = "";
+  $("#hero").classList.remove("is-hidden");
+  $("#input").value = "";
+  autoGrow();
+  $("#main").scrollTop = 0;
+  $("#input").focus();
+}
+
 /* ---------- Инициализация ---------- */
 function init() {
   initAccordions();
@@ -473,6 +488,7 @@ function init() {
 
   $("#send").addEventListener("click", send);
   $("#mic").addEventListener("click", openVoiceMode);
+  $("#new-chat").addEventListener("click", newChat);
   $("#voice-end").addEventListener("click", closeVoiceMode);
   // Тап по шару — ручной «стоп записи» (подстраховка, если пауза не поймалась).
   $("#voice-orb").addEventListener("click", () => { if (VM.state === "listening") finishUtterance(); });
