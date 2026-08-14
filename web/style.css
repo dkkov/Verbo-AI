@@ -45,6 +45,9 @@
   --radius: 4px;
   --radius-lg: 6px;
   --shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.8);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -108,8 +111,14 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
 .main::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; }
 
 /* ---------- Приветствие ---------- */
-.hero { padding: 44px 0 4px; animation: rise 0.5s ease both; }
+.hero { padding: 44px 0 4px; }
 .hero.is-hidden { display: none; }
+/* Стаггер входа онбординга: заголовок → линия → текст → кнопки → услуги */
+.hero__title, .hero__rule, .hero__sub, .actions, .cards { animation: rise 0.5s var(--ease-out) both; }
+.hero__rule { animation-delay: 0.07s; }
+.hero__sub { animation-delay: 0.14s; }
+.actions { animation-delay: 0.21s; }
+.cards { animation-delay: 0.28s; }
 .hero__title {
   font-family: var(--serif); font-weight: 500;
   font-size: clamp(32px, 6vw, 46px); line-height: 1.04; letter-spacing: -0.01em;
@@ -256,7 +265,7 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
 .voice__orb.is-thinking { animation: orbidle 1.3s ease-in-out infinite; opacity: 0.85; }
 @keyframes orbidle { 0%, 100% { box-shadow: 0 0 60px -6px rgba(200, 164, 90, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.16); } 50% { box-shadow: 0 0 82px 0 rgba(200, 164, 90, 0.85), inset 0 0 40px rgba(255, 255, 255, 0.22); } }
 @keyframes orbspeak { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-.voice__status { font-family: var(--serif); color: var(--ivory); font-size: 20px; font-weight: 500; }
+.voice__status { font-family: var(--serif); color: var(--ivory); font-size: 20px; font-weight: 500; transition: opacity 0.15s ease; }
 .voice__log { flex: 1 1 auto; width: 100%; max-width: 560px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 22px 0; padding: 0 2px; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
 .voice__msg { display: flex; animation: rise 0.3s ease both; }
 .voice__msg.user { justify-content: flex-end; }
@@ -266,9 +275,18 @@ button, textarea, .action, .card__head, .lang__btn { touch-action: manipulation;
 .voice__end { flex: 0 0 auto; cursor: pointer; font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ivory); background: transparent; border: 1px solid var(--line-2); padding: 12px 22px; border-radius: 999px; min-height: 44px; transition: all 0.18s ease; }
 .voice__end:hover { border-color: var(--danger); color: #fff; background: var(--danger); }
 
+/* Press feedback (#1): тактильный отклик на нажатие. Поздний блок — чтобы transform
+   не перебивался transition'ами компонентов выше. */
+.action, .card__head, .lang__btn, .send, .mic, .btn, .voice__end {
+  transition: transform 140ms var(--ease-out), background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.action:active, .card__head:active, .lang__btn:active,
+.send:active, .mic:active, .btn:active, .voice__end:active { transform: scale(0.97); }
+
 /* ---------- Анимации ---------- */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes blink { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+@keyframes voiceIn { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* ---------- Адаптив ---------- */

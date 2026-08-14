@@ -214,7 +214,10 @@ async function openVoiceMode() {
   }
   VM.active = true;
   $("#voice-log").innerHTML = "";
-  $("#voice-overlay").hidden = false;
+  const ov = $("#voice-overlay");
+  ov.hidden = false;
+  // Вход оверлея: мягкий fade+scale (перезапуск анимации).
+  ov.style.animation = "none"; void ov.offsetWidth; ov.style.animation = "voiceIn 0.3s var(--ease-out) both";
   const AC = window.AudioContext || window.webkitAudioContext;
   VM.ctx = new AC();
   VM.source = VM.ctx.createMediaStreamSource(VM.stream);
@@ -240,7 +243,10 @@ function setVoiceState(s) {
   VM.state = s;
   const map = { listening: "Говорите…", thinking: "Думаю…", speaking: "Отвечаю…" };
   const st = $("#voice-status");
-  if (st) st.textContent = map[s] || "";
+  if (st && st.textContent !== (map[s] || "")) {
+    st.style.opacity = "0"; // кроссфейд смены статуса
+    setTimeout(() => { st.textContent = map[s] || ""; st.style.opacity = "1"; }, 130);
+  }
   const orb = $("#voice-orb");
   if (orb) {
     orb.classList.toggle("is-speaking", s === "speaking");
