@@ -18,6 +18,15 @@ const I18N = {
     micTitle: "Голосовой ввод",
     voiceTitle: "Говорить",
     closeTitle: "Закрыть",
+    vListening: "Говорите…",
+    vThinking: "Думаю…",
+    vSpeaking: "Отвечаю…",
+    vError: "Ошибка связи. Попробуйте ещё раз.",
+    aError: "Ошибка",
+    aNetError: "Ошибка сети",
+    micDenied: "Не удалось получить доступ к микрофону — разрешите его в браузере и попробуйте снова.",
+    vYou: "Вы: ",
+    vBot: "Ассистент: ",
     passPh: "Пароль администратора",
     servicesMeta: (n) => (n ? `${n} услуг` : ""),
     waking: "Просыпаюсь после простоя, это займёт до минуты…",
@@ -39,6 +48,15 @@ const I18N = {
     micTitle: "Voice input",
     voiceTitle: "Speak",
     closeTitle: "Close",
+    vListening: "Listening…",
+    vThinking: "Thinking…",
+    vSpeaking: "Speaking…",
+    vError: "Connection error. Please try again.",
+    aError: "Error",
+    aNetError: "Network error",
+    micDenied: "Couldn't access the microphone — allow it in your browser and try again.",
+    vYou: "You: ",
+    vBot: "Assistant: ",
     passPh: "Admin password",
     servicesMeta: (n) => (n ? `${n} services` : ""),
     waking: "Waking up from sleep, this can take up to a minute…",
@@ -223,7 +241,7 @@ async function openVoiceMode() {
   try {
     VM.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (e) {
-    addMessage("bot", "Не удалось получить доступ к микрофону — разрешите его в браузере и попробуйте снова.");
+    addMessage("bot", I18N[state.lang].micDenied);
     return;
   }
   VM.active = true;
@@ -255,7 +273,8 @@ function closeVoiceMode() {
 
 function setVoiceState(s) {
   VM.state = s;
-  const map = { listening: "Говорите…", thinking: "Думаю…", speaking: "Отвечаю…" };
+  const t = I18N[state.lang];
+  const map = { listening: t.vListening, thinking: t.vThinking, speaking: t.vSpeaking };
   const st = $("#voice-status");
   if (st && st.textContent !== (map[s] || "")) {
     st.style.opacity = "0"; // кроссфейд смены статуса
@@ -326,7 +345,7 @@ async function onUtterance() {
     addVoiceMsg("bot", data.reply || "…");
     if (data.audio) await speakVoice(data.audio); // голос Gemini (при недоступном TTS — только текст)
   } catch (e) {
-    if (VM.active) addVoiceMsg("bot", "Ошибка связи. Попробуйте ещё раз.");
+    if (VM.active) addVoiceMsg("bot", I18N[state.lang].vError);
   }
   if (VM.active) startListening(); // снова слушаем — непрерывный диалог
 }
@@ -344,7 +363,7 @@ function speakVoice(b64) {
 function addVoiceMsg(role, text) {
   const wrap = el("div", "voice__msg " + (role === "user" ? "user" : "bot"));
   const bub = el("div", "voice__bub");
-  bub.textContent = (role === "user" ? "Вы: " : "Ассистент: ") + text;
+  bub.textContent = (role === "user" ? I18N[state.lang].vYou : I18N[state.lang].vBot) + text;
   wrap.append(bub);
   const log = $("#voice-log");
   log.append(wrap);
@@ -472,7 +491,7 @@ async function loadLeads() {
       body: JSON.stringify({ password: $("#admin-pass").value }),
     });
     const data = await res.json();
-    if (!res.ok) { status.textContent = data.error || "Ошибка"; return; }
+    if (!res.ok) { status.textContent = data.error || I18N[state.lang].aError; return; }
     const leads = data.leads || [];
     status.textContent = `Заявок: ${leads.length}`;
     if (!leads.length) { table.innerHTML = `<div class="admin-status">${I18N[state.lang].noLeads}</div>`; return; }
@@ -487,7 +506,7 @@ async function loadLeads() {
     });
     t.append(tb); table.append(t);
   } catch (e) {
-    status.textContent = "Ошибка сети";
+    status.textContent = I18N[state.lang].aNetError;
   }
 }
 
