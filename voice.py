@@ -26,8 +26,9 @@ def transcribe(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
             model=MODEL_MAIN,
             contents=[
                 gt.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
-                "Транскрибируй речь из аудио. Верни ТОЛЬКО распознанный текст — "
-                "без кавычек, пояснений и префиксов.",
+                "Transcribe the speech in this audio in its original language. "
+                "Return ONLY the transcribed text — no quotes, no explanations, "
+                "no prefixes.",
             ],
             config=gt.GenerateContentConfig(temperature=0),
         )
