@@ -58,7 +58,7 @@ ADMIN_PASSWORD = _optional("ADMIN_PASSWORD", "")
 
 # --- Сетевые настройки ------------------------------------------------------
 # Таймаут на любой внешний вызов (модель, Supabase, Telegram), секунды.
-CALL_TIMEOUT = float(_optional("CALL_TIMEOUT", "30"))
+CALL_TIMEOUT = float(_optional("CALL_TIMEOUT", "45"))
 # Сколько последних реплик держим в активном контексте.
 HISTORY_WINDOW = int(_optional("HISTORY_WINDOW", "12"))
 # Порт для Render (Render задаёт PORT сам). Локально — 7860.

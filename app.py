@@ -181,9 +181,29 @@ def _sync_knowledge_best_effort():
         log.warning("Не удалось синхронизировать knowledge (не критично): %s", e)
 
 
+def _warmup_model_best_effort():
+    """
+    Прогреваем путь к модели при старте инстанса: крошечный вызов Gemini заранее
+    открывает HTTPS-соединение и маршрутизацию модели. Иначе ПЕРВЫЙ запрос
+    пользователя после холодного старта (Render free просыпается ~50 сек) ловит
+    всю задержку сразу и часто отваливается по таймауту → «technical glitch».
+    Best-effort, без ретраев: не удалось — просто логируем, старт не блокируем.
+    """
+    try:
+        config.gemini_client.models.generate_content(
+            model=config.MODEL_CHEAP,
+            contents="ping",
+            config=gt.GenerateContentConfig(max_output_tokens=1, temperature=0),
+        )
+        log.info("Модель прогрета на старте.")
+    except Exception as e:  # noqa: BLE001
+        log.warning("Прогрев модели не удался (не критично): %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _sync_knowledge_best_effort()
+    _warmup_model_best_effort()
     yield
 
 
