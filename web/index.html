@@ -64,10 +64,10 @@
     <footer class="composer">
       <div class="composer__inner">
         <textarea id="input" rows="1" placeholder="Спросите о ценах или запишитесь на пробное занятие" data-i18n-ph="inputPh"></textarea>
-        <button id="mic" class="mic" aria-label="Записать голосом" title="Голосовой ввод">
+        <button id="mic" class="mic" data-i18n-title="micTitle" aria-label="Voice input" title="Voice input">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
         </button>
-        <button id="send" class="send" aria-label="Отправить">
+        <button id="send" class="send" data-i18n-title="sendTitle" aria-label="Send" title="Send">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
       </div>
@@ -80,7 +80,7 @@
     <div class="modal__box">
       <div class="modal__head">
         <span data-i18n="leadsTitle">Заявки</span>
-        <button class="modal__close" id="admin-close" aria-label="Закрыть">✕</button>
+        <button class="modal__close" id="admin-close" data-i18n-title="closeTitle" aria-label="Close">✕</button>
       </div>
       <div class="modal__body" id="admin-body">
         <input type="password" id="admin-pass" placeholder="Пароль администратора" data-i18n-ph="passPh" />
@@ -93,13 +93,13 @@
 
   <!-- Полноэкранный голосовой режим («звонок») -->
   <div class="voice" id="voice-overlay" hidden>
-    <div class="voice__top">Verbo · голосовой режим</div>
+    <div class="voice__top">Voice mode</div>
     <div class="voice__center">
-      <button class="voice__orb" id="voice-orb" aria-label="Говорить"></button>
-      <div class="voice__status" id="voice-status">Говорите…</div>
+      <button class="voice__orb" id="voice-orb" data-i18n-title="voiceTitle" aria-label="Speak"></button>
+      <div class="voice__status" id="voice-status">Speak…</div>
     </div>
     <div class="voice__log" id="voice-log" aria-live="polite"></div>
-    <button class="voice__end" id="voice-end">✕ Завершить</button>
+    <button class="voice__end" id="voice-end">✕ End</button>
   </div>
 
   <script src="/app.js"></script>
