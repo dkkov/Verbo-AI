@@ -9,8 +9,12 @@ judge.py — самопроверка ответа перед отправкой
 from config import MODEL_CHEAP
 from llm import complete_json
 from knowledge import KNOWLEDGE_TEXT
+import business
+import strings
 import prompts
 import db
+
+_GLUE = strings.glue(business.LANGUAGE)
 
 
 def review(answer: str, session_id: str) -> dict:
@@ -27,7 +31,7 @@ def review(answer: str, session_id: str) -> dict:
         verdict = complete_json(
             model=MODEL_CHEAP,
             system=system,
-            messages=[{"role": "user", "content": "Проверь черновик."}],
+            messages=[{"role": "user", "content": _GLUE["judge_user"]}],
             max_tokens=400,
         )
     except Exception as e:  # noqa: BLE001
@@ -50,9 +54,4 @@ def review(answer: str, session_id: str) -> dict:
 def issues_as_feedback(issues: list[str]) -> str:
     """Формирует текст замечаний судьи для перегенерации ответа."""
     bullet = "\n".join(f"- {i}" for i in issues)
-    return (
-        "Твой предыдущий вариант ответа не прошёл внутреннюю проверку качества. "
-        "Исправь следующие замечания и дай новый ответ, оставаясь в рамках базы "
-        "знаний и правил тона:\n"
-        f"{bullet}"
-    )
+    return _GLUE["judge_feedback"].format(issues=bullet)

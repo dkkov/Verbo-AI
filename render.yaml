@@ -12,6 +12,10 @@ services:
     startCommand: python app.py
     healthCheckPath: /health
     envVars:
+      # Какой конфиг школы поднимать. Демо для Upwork — англ. школа в USD.
+      # Смена ниши/языка = другой файл из configs/, без правки кода.
+      - key: SCHOOL_CONFIG
+        value: configs/brightpath_en.yaml
       - key: GEMINI_API_KEY
         sync: false
       - key: SUPABASE_URL

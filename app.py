@@ -26,6 +26,7 @@ from google.genai import types as gt
 
 import config
 from config import log, MODEL_MAIN
+import business
 from knowledge import KNOWLEDGE_TEXT, CONTACTS_LINE, knowledge_rows, FORMATS, PACKAGES
 import prompts
 import memory
@@ -39,23 +40,14 @@ import voice as voice_mod
 # --------------------------------------------------------------------------- #
 # Контент интерфейса                                                          #
 # --------------------------------------------------------------------------- #
-EXAMPLES = [
-    "Сколько стоит индивидуальное занятие?",
-    "Хочу записаться на пробное",
-    "Готовите к IELTS?",
-    "Можно ли заморозить пакет?",
-]
+# Весь пользовательский контент интерфейса — из конфига активной школы (business.UI).
+EXAMPLES = business.UI["examples"]
 
-GREETING = (
-    "Здравствуйте! Я консультант онлайн-школы английского «Verbo». "
-    "Помогу разобраться с форматами и ценами, отвечу на вопросы о школе "
-    "и запишу на бесплатное пробное занятие. Что вас интересует?"
-)
+GREETING = business.UI["greeting"]
 
-ERROR_REPLY = (
-    "Извините, у меня возникла техническая заминка. Попробуйте, пожалуйста, "
-    "написать ещё раз чуть позже или свяжитесь со школой напрямую: " + CONTACTS_LINE
-)
+ERROR_REPLY = business.UI["error_prefix"].rstrip() + " " + CONTACTS_LINE
+
+VOICE_NOT_RECOGNIZED = business.UI["voice_not_recognized"]
 
 MAX_TOOL_ITERATIONS = 3
 
@@ -254,6 +246,8 @@ def bootstrap(session_id: str | None = None):
         "session_id": session_id,
         "name": ctx.get("name") or "",
         "returning": bool(history),
+        "language": business.LANGUAGE,
+        "business_name": business.BUSINESS["name"],
         "greeting": GREETING,
         "history": history,
         "services": _services_payload(),
@@ -302,7 +296,7 @@ def voice(body: VoiceIn):
     if not transcript:
         return {
             "transcript": "",
-            "reply": "Извините, не расслышал. Скажите ещё раз, пожалуйста.",
+            "reply": VOICE_NOT_RECOGNIZED,
             "audio": "",
             "session_id": session_id,
         }

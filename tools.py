@@ -2,48 +2,47 @@
 """
 tools.py — реальное действие бота: создание заявки (tool calling).
 
-Один инструмент create_lead. Схема отдаётся модели в app.py; когда модель решает
-её вызвать, вызывается run_create_lead(). Здесь же — валидация контакта,
-INSERT в Supabase и уведомление владельцу в Telegram.
+Один инструмент create_lead. Схема, описание и сообщения берутся из активного
+конфига школы (business.py) и язык-зависимых строк (strings.py). Валидация
+контакта вынесена в validation.py и работает по режиму из конфига
+(international / ua).
 """
-import re
-
 import requests
 from google.genai import types as gt
 
 import config
 from config import log
+import business
+import strings
 from knowledge import CONTACTS_LINE
+from validation import validate_contact as _validate_contact
 from llm import with_retry
 import db
+
+_GLUE = strings.glue(business.LANGUAGE)
+_BUSINESS_NAME = business.BUSINESS["name"]
 
 # --------------------------------------------------------------------------- #
 # Схема инструмента для модели (Gemini function declaration)                    #
 # --------------------------------------------------------------------------- #
 _CREATE_LEAD_DECLARATION = gt.FunctionDeclaration(
     name="create_lead",
-    description=(
-        "Создать заявку на бесплатное пробное занятие в школе Verbo. "
-        "Вызывай ТОЛЬКО когда известны все пять полей: имя, контакт (телефон +380 "
-        "или email), самооценка уровня, цель обучения и удобное время. "
-        "Если каких-то полей не хватает — не вызывай инструмент, а вежливо спроси "
-        "недостающее (по одному вопросу за раз)."
-    ),
+    description=_GLUE["tool_description"].format(business=_BUSINESS_NAME),
     parameters=gt.Schema(
         type=gt.Type.OBJECT,
         properties={
-            "name": gt.Schema(type=gt.Type.STRING, description="Имя человека."),
+            "name": gt.Schema(type=gt.Type.STRING, description="Person's name."),
             "contact": gt.Schema(
                 type=gt.Type.STRING,
-                description="Телефон в формате +380... или email.",
+                description="Phone in international format +... or an email.",
             ),
             "level_self_assessment": gt.Schema(
                 type=gt.Type.STRING,
-                description="Как человек сам оценивает свой уровень английского.",
+                description="How the person rates their own English level.",
             ),
-            "goal": gt.Schema(type=gt.Type.STRING, description="Цель обучения."),
+            "goal": gt.Schema(type=gt.Type.STRING, description="Learning goal."),
             "preferred_time": gt.Schema(
-                type=gt.Type.STRING, description="Удобное время для занятий."
+                type=gt.Type.STRING, description="Preferred time for lessons."
             ),
         },
         required=[
@@ -61,21 +60,10 @@ def build_create_lead_tool() -> gt.Tool:
     """Возвращает инструмент create_lead в формате Gemini для передачи в generate()."""
     return gt.Tool(function_declarations=[_CREATE_LEAD_DECLARATION])
 
-# --------------------------------------------------------------------------- #
-# Валидация контакта                                                          #
-# --------------------------------------------------------------------------- #
-_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-# Телефон: +380 и ещё 9 цифр, допускаем пробелы/дефисы/скобки внутри.
-_PHONE_RE = re.compile(r"^\+380[\s\-()]*\d[\s\-()\d]{7,}$")
-
 
 def validate_contact(contact: str) -> bool:
-    """Контакт валиден, если это email или украинский телефон +380..."""
-    contact = (contact or "").strip()
-    if _EMAIL_RE.match(contact):
-        return True
-    digits = re.sub(r"[^\d+]", "", contact)
-    return bool(_PHONE_RE.match(contact)) or bool(re.match(r"^\+380\d{9}$", digits))
+    """Валидация контакта по режиму активной школы (international / ua)."""
+    return _validate_contact(contact, business.CONTACT_MODE)
 
 
 # --------------------------------------------------------------------------- #
@@ -91,12 +79,12 @@ def _notify_owner(lead: dict) -> None:
         return
 
     text = (
-        "🔔 Новая заявка Verbo\n"
-        f"Имя: {lead.get('name')}\n"
-        f"Контакт: {lead.get('contact')}\n"
-        f"Уровень: {lead.get('level')}\n"
-        f"Цель: {lead.get('goal')}\n"
-        f"Удобное время: {lead.get('preferred_time')}\n"
+        _GLUE["notify_title"].format(business=_BUSINESS_NAME) + "\n"
+        f"{_GLUE['notify_name']}: {lead.get('name')}\n"
+        f"{_GLUE['notify_contact']}: {lead.get('contact')}\n"
+        f"{_GLUE['notify_level']}: {lead.get('level')}\n"
+        f"{_GLUE['notify_goal']}: {lead.get('goal')}\n"
+        f"{_GLUE['notify_time']}: {lead.get('preferred_time')}\n"
         f"session_id: {lead.get('session_id')}"
     )
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -129,13 +117,7 @@ def run_create_lead(args: dict, session_id: str) -> dict:
     """
     contact = (args.get("contact") or "").strip()
     if not validate_contact(contact):
-        return {
-            "status": "invalid_contact",
-            "message": (
-                "Контакт не распознан. Нужен телефон в формате +380XXXXXXXXX "
-                "или email. Попроси корректный контакт ещё раз."
-            ),
-        }
+        return {"status": "invalid_contact", "message": _GLUE["invalid_contact"]}
 
     lead_row = {
         "name": (args.get("name") or "").strip(),
@@ -155,10 +137,7 @@ def run_create_lead(args: dict, session_id: str) -> dict:
         db.insert_log(session_id, "error", {"where": "insert_lead", "error": str(e)})
         return {
             "status": "error",
-            "message": (
-                "Заявку сейчас сохранить не удалось из-за технической ошибки. "
-                f"Дай человеку прямые контакты школы: {CONTACTS_LINE}"
-            ),
+            "message": _GLUE["lead_error"].format(contacts=CONTACTS_LINE),
         }
 
     # Заявка сохранена — уведомляем владельца (best-effort) и логируем событие.
@@ -173,9 +152,5 @@ def run_create_lead(args: dict, session_id: str) -> dict:
             "goal": lead_row["goal"],
             "preferred_time": lead_row["preferred_time"],
         },
-        "message": (
-            "Заявка успешно сохранена. Подтверди человеку естественным языком, "
-            "что записали на бесплатное пробное, менеджер свяжется по указанному "
-            "контакту, и коротко скажи, что будет дальше."
-        ),
+        "message": _GLUE["lead_ok"],
     }

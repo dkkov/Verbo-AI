@@ -1,173 +1,64 @@
 # -*- coding: utf-8 -*-
 """
-knowledge.py — ЕДИНСТВЕННЫЙ источник правды о школе «Verbo».
+knowledge.py — ЕДИНСТВЕННЫЙ источник правды о школе.
 
-Всё, что бот имеет право утверждать как факт (цены, длительность, условия,
-преподаватели, контакты), живёт здесь. Ничего сверх этого модель придумывать
-не должна — за этим следит judge.py.
+Раньше данные были захардкожены здесь. Теперь они приходят из конфига активной
+школы (business.py ← configs/<tenant>.yaml), а этот модуль лишь собирает из них
+текст базы знаний для системного промпта и «плоское» представление для зеркальной
+таблицы Supabase `knowledge`. Ярлыки разделов — язык-зависимые (strings.py).
 
-Структура специально плоская и человекочитаемая, чтобы менеджер школы мог
-править её без знания Python. Функция render_knowledge() собирает из неё
-текст, который подставляется в системный промпт.
-
-Таблица Supabase `knowledge` — это ЗЕРКАЛО этого файла (для аудита и правок
-из интерфейса). Синхронизация — db.sync_knowledge(). В рантайме промпт берёт
-данные отсюда напрямую, чтобы не ходить в БД на каждый запрос.
+Публичный API (SCHOOL, FORMATS, PACKAGES, ..., render_knowledge, knowledge_rows,
+KNOWLEDGE_TEXT, CONTACTS_LINE) сохранён, чтобы остальной код не менялся.
 """
+import business
+import strings
 
-SCHOOL = {
-    "name": "Verbo",
-    "about": (
-        "Онлайн-школа английского языка «Verbo». Работает с 2019 года, "
-        "более 2400 выпускников."
-    ),
-    "schedule": "с 8:00 до 22:00 по Киеву, понедельник–суббота. Воскресенье — выходной.",
-    "platform": "Zoom + личный кабинет с домашними заданиями и записями занятий.",
-    "levels": "A1–C1.",
-    "entry": (
-        "Вход через бесплатный тест уровня (25 минут, онлайн) или пробное занятие."
-    ),
-    "trial": (
-        "Пробное занятие: бесплатное, 30 минут, включает определение уровня "
-        "и план обучения."
-    ),
-}
+# Реэкспорт данных активной школы под прежними именами (совместимость).
+SCHOOL = business.BUSINESS
+FORMATS = business.FORMATS
+PACKAGES = business.PACKAGES
+DIRECTIONS = business.DIRECTIONS
+TEACHERS = business.TEACHERS
+TEACHERS_SUMMARY = business.TEACHERS_SUMMARY
+POLICIES = business.POLICIES
+CONTACTS = business.CONTACTS
 
-FORMATS = [
-    {
-        "key": "individual",
-        "title": "Индивидуальные занятия",
-        "duration": "50 минут",
-        "price": "550 грн за занятие",
-    },
-    {
-        "key": "mini_group",
-        "title": "Мини-группы до 4 человек",
-        "duration": "60 минут",
-        "price": "320 грн за занятие",
-    },
-    {
-        "key": "speaking_club",
-        "title": "Разговорный клуб",
-        "duration": "2 встречи в неделю",
-        "price": "900 грн в месяц",
-    },
-]
-
-PACKAGES = [
-    {
-        "key": "pack_8",
-        "title": "Пакет 8 индивидуальных занятий",
-        "price": "3960 грн",
-        "note": "скидка 10%",
-    },
-    {
-        "key": "pack_16",
-        "title": "Пакет 16 индивидуальных занятий",
-        "price": "7480 грн",
-        "note": "скидка 15%",
-    },
-]
-
-DIRECTIONS = [
-    "General English",
-    "Business English",
-    "подготовка к IELTS",
-    "английский для IT",
-    "разговорная практика",
-    "английский для детей 8–14 лет",
-]
-
-TEACHERS = [
-    {
-        "name": "Олена Ковальчук",
-        "focus": "Business English, корпоративные группы",
-        "experience": "8 лет опыта",
-        "cert": "CELTA",
-    },
-    {
-        "name": "Дмитрий Савченко",
-        "focus": "подготовка к IELTS (собственный балл 8.0)",
-        "experience": "6 лет опыта",
-        "cert": "TKT",
-    },
-    {
-        "name": "Мария Гринь",
-        "focus": "дети и подростки, игровая методика",
-        "experience": "5 лет опыта",
-        "cert": "CELTA",
-    },
-    {
-        "name": "Adam Price",
-        "focus": "носитель языка (Великобритания), разговорная практика и произношение",
-        "experience": "",
-        "cert": "",
-    },
-    {
-        "name": "Ирина Мельник",
-        "focus": "методист школы, уровень C2, General English и внутренние аттестации",
-        "experience": "",
-        "cert": "",
-    },
-]
-
-TEACHERS_SUMMARY = "Всего 12 преподавателей, все с CELTA или TKT."
-
-POLICIES = {
-    "payment": "Оплата помесячно или пакетами, карта / IBAN. Пакеты действуют 3 месяца.",
-    "cancellation": (
-        "Отмена занятия: не позднее чем за 12 часов, иначе занятие сгорает."
-    ),
-    "freeze": (
-        "Заморозка: до 14 дней раз в полгода без потери оплаченных занятий."
-    ),
-    "refund": (
-        "Возврат за неиспользованные занятия пакета — по заявлению, "
-        "в течение 10 рабочих дней."
-    ),
-}
-
-CONTACTS = {
-    "phone": "+380 44 123 45 67",
-    "email": "hello@verbo.school",
-    "telegram": "@verbo_support",
-}
+_L = strings.labels(business.LANGUAGE)
 
 
 def render_knowledge() -> str:
     """Собирает всю базу знаний в один текстовый блок для системного промпта."""
     lines = []
-    lines.append(f"ШКОЛА: {SCHOOL['name']}")
+    lines.append(f"{_L['school']}: {SCHOOL['name']}")
     lines.append(SCHOOL["about"])
     lines.append("")
 
-    lines.append("ФОРМАТЫ ЗАНЯТИЙ:")
+    lines.append(_L["formats_header"])
     for f in FORMATS:
         lines.append(f"- {f['title']} — {f['duration']}, {f['price']}.")
     lines.append("")
 
-    lines.append("ПАКЕТЫ:")
+    lines.append(_L["packages_header"])
     for p in PACKAGES:
         lines.append(f"- {p['title']} — {p['price']} ({p['note']}).")
     lines.append("")
 
-    lines.append(f"УРОВНИ: {SCHOOL['levels']}")
+    lines.append(f"{_L['levels']}: {SCHOOL['levels']}")
     lines.append(SCHOOL["entry"])
     lines.append(SCHOOL["trial"])
     lines.append("")
 
-    lines.append(f"РАСПИСАНИЕ: {SCHOOL['schedule']}")
-    lines.append(f"ПЛАТФОРМА: {SCHOOL['platform']}")
+    lines.append(f"{_L['schedule']}: {SCHOOL['schedule']}")
+    lines.append(f"{_L['platform']}: {SCHOOL['platform']}")
     lines.append("")
 
-    lines.append("НАПРАВЛЕНИЯ: " + ", ".join(DIRECTIONS) + ".")
+    lines.append(f"{_L['directions']}: " + ", ".join(DIRECTIONS) + ".")
     lines.append("")
 
-    lines.append("ПРЕПОДАВАТЕЛИ:")
+    lines.append(_L["teachers_header"])
     for t in TEACHERS:
-        parts = [t["name"], "—", t["focus"]]
-        tail = ", ".join(x for x in (t["experience"], t["cert"]) if x)
         line = f"- {t['name']} — {t['focus']}"
+        tail = ", ".join(x for x in (t.get("experience", ""), t.get("cert", "")) if x)
         if tail:
             line += f", {tail}"
         line += "."
@@ -175,17 +66,17 @@ def render_knowledge() -> str:
     lines.append(f"- {TEACHERS_SUMMARY}")
     lines.append("")
 
-    lines.append("УСЛОВИЯ:")
+    lines.append(_L["policies_header"])
     lines.append(f"- {POLICIES['payment']}")
     lines.append(f"- {POLICIES['cancellation']}")
     lines.append(f"- {POLICIES['freeze']}")
     lines.append(f"- {POLICIES['refund']}")
     lines.append("")
 
-    lines.append("КОНТАКТЫ:")
-    lines.append(f"- Телефон: {CONTACTS['phone']}")
-    lines.append(f"- Email: {CONTACTS['email']}")
-    lines.append(f"- Telegram: {CONTACTS['telegram']}")
+    lines.append(_L["contacts_header"])
+    lines.append(f"- {_L['phone']}: {CONTACTS['phone']}")
+    lines.append(f"- {_L['email']}: {CONTACTS['email']}")
+    lines.append(f"- {_L['telegram']}: {CONTACTS['telegram']}")
 
     return "\n".join(lines)
 
@@ -196,12 +87,8 @@ def knowledge_rows() -> list[dict]:
     Каждая строка: (category, key, value). Используется db.sync_knowledge().
     """
     rows = []
-    rows.append({"category": "school", "key": "about", "value": SCHOOL["about"]})
-    rows.append({"category": "school", "key": "schedule", "value": SCHOOL["schedule"]})
-    rows.append({"category": "school", "key": "platform", "value": SCHOOL["platform"]})
-    rows.append({"category": "school", "key": "levels", "value": SCHOOL["levels"]})
-    rows.append({"category": "school", "key": "entry", "value": SCHOOL["entry"]})
-    rows.append({"category": "school", "key": "trial", "value": SCHOOL["trial"]})
+    for key in ("about", "schedule", "platform", "levels", "entry", "trial"):
+        rows.append({"category": "school", "key": key, "value": SCHOOL[key]})
 
     for f in FORMATS:
         rows.append({
@@ -217,7 +104,7 @@ def knowledge_rows() -> list[dict]:
         })
     rows.append({"category": "directions", "key": "all", "value": ", ".join(DIRECTIONS)})
     for i, t in enumerate(TEACHERS):
-        tail = ", ".join(x for x in (t["experience"], t["cert"]) if x)
+        tail = ", ".join(x for x in (t.get("experience", ""), t.get("cert", "")) if x)
         value = f"{t['name']} — {t['focus']}"
         if tail:
             value += f", {tail}"
@@ -233,7 +120,8 @@ def knowledge_rows() -> list[dict]:
 KNOWLEDGE_TEXT = render_knowledge()
 
 # Короткая строка контактов — используется в фолбэках при ошибках инструментов.
-CONTACTS_LINE = (
-    f"Телефон {CONTACTS['phone']}, email {CONTACTS['email']}, "
-    f"Telegram {CONTACTS['telegram']}."
+CONTACTS_LINE = strings.contacts_line_tmpl(business.LANGUAGE).format(
+    phone=CONTACTS["phone"],
+    email=CONTACTS["email"],
+    telegram=CONTACTS["telegram"],
 )

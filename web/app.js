@@ -67,7 +67,10 @@ const ACTIONS = [
 
 const state = {
   sessionId: localStorage.getItem("verbo_sid") || "",
-  lang: localStorage.getItem("verbo_lang") || "ru",
+  // Язык: если пользователь выбирал вручную — берём его выбор; иначе язык
+  // задаёт активная школа через /api/bootstrap (data.language).
+  lang: localStorage.getItem("verbo_lang") || "en",
+  langLocked: !!localStorage.getItem("verbo_lang"),
   services: [],
   busy: false,
 };
@@ -413,6 +416,17 @@ async function bootstrap() {
     localStorage.setItem("verbo_sid", data.session_id);
     state.services = data.services || [];
 
+    // Язык из конфига школы — если пользователь не выбирал вручную.
+    if (!state.langLocked && data.language && I18N[data.language]) {
+      state.lang = data.language;
+    }
+    // Название школы — в бренд и заголовок вкладки.
+    if (data.business_name) {
+      document.title = data.business_name;
+      const bn = document.querySelector(".brand__name");
+      if (bn) bn.textContent = data.business_name;
+    }
+
     renderServices(state.services);
     applyLang();
 
@@ -500,6 +514,7 @@ function init() {
   document.querySelectorAll(".lang__btn").forEach((b) =>
     b.addEventListener("click", () => {
       state.lang = b.dataset.lang;
+      state.langLocked = true;
       localStorage.setItem("verbo_lang", state.lang);
       applyLang();
     })

@@ -1,0 +1,104 @@
+# Конфиг международной онлайн-школы «BrightPath English» (EN, USD).
+# Демонстрирует шаблонизацию: другой язык, валюта, контакты — без правки кода.
+# Активировать: SCHOOL_CONFIG=configs/brightpath_en.yaml
+language: en
+currency: USD
+
+business:
+  name: BrightPath English
+  about: >-
+    BrightPath English is an online English school. Founded in 2019,
+    with over 2,400 graduates worldwide.
+  schedule: "8:00–22:00 GMT, Monday–Saturday. Closed on Sunday."
+  platform: "Zoom plus a personal dashboard with homework and lesson recordings."
+  levels: "A1–C1."
+  entry: "Start with a free placement test (25 minutes, online) or a trial lesson."
+  trial: >-
+    Trial lesson: free, 30 minutes, includes a level check and a personal
+    study plan.
+
+formats:
+  - key: individual
+    title: "Individual lessons"
+    duration: "50 minutes"
+    price: "$22 per lesson"
+  - key: mini_group
+    title: "Mini-groups of up to 4 students"
+    duration: "60 minutes"
+    price: "$13 per lesson"
+  - key: speaking_club
+    title: "Speaking club"
+    duration: "2 sessions per week"
+    price: "$36 per month"
+
+packages:
+  - key: pack_8
+    title: "Package of 8 individual lessons"
+    price: "$158"
+    note: "10% off"
+  - key: pack_16
+    title: "Package of 16 individual lessons"
+    price: "$299"
+    note: "15% off"
+
+directions:
+  - "General English"
+  - "Business English"
+  - "IELTS preparation"
+  - "English for IT"
+  - "conversation practice"
+  - "English for kids aged 8–14"
+
+teachers:
+  - name: "Elena Novak"
+    focus: "Business English, corporate groups"
+    experience: "8 years of experience"
+    cert: "CELTA"
+  - name: "David Sanders"
+    focus: "IELTS preparation (own score 8.0)"
+    experience: "6 years of experience"
+    cert: "TKT"
+  - name: "Maria Green"
+    focus: "kids and teens, game-based method"
+    experience: "5 years of experience"
+    cert: "CELTA"
+  - name: "Adam Price"
+    focus: "native speaker (UK), conversation practice and pronunciation"
+    experience: ""
+    cert: ""
+  - name: "Irene Miller"
+    focus: "school methodologist, C2 level, General English and internal assessments"
+    experience: ""
+    cert: ""
+
+teachers_summary: "12 teachers in total, all CELTA- or TKT-certified."
+
+policies:
+  payment: "Pay monthly or by package, card or bank transfer. Packages are valid for 3 months."
+  cancellation: "Cancel a lesson at least 12 hours in advance, otherwise it is forfeited."
+  freeze: "Freeze: up to 14 days once every six months without losing paid lessons."
+  refund: >-
+    Refund for unused package lessons on request, within 10 business days.
+
+contacts:
+  phone: "+1 555 018 4432"
+  email: "hello@brightpath.school"
+  telegram: "@brightpath_support"
+
+contact_validation:
+  mode: international
+
+ui:
+  greeting: >-
+    Hi! I'm the assistant for BrightPath English, an online English school.
+    I can walk you through formats and prices, answer questions about the
+    school, and book you a free trial lesson. What would you like to know?
+  error_prefix: >-
+    Sorry, I hit a technical glitch. Please try again in a moment, or reach
+    the school directly:
+  voice_not_recognized: "Sorry, I didn't catch that. Could you say it again, please?"
+  examples:
+    - "How much is an individual lesson?"
+    - "I'd like to book a trial lesson"
+    - "Do you prepare for IELTS?"
+    - "Can I freeze my package?"
