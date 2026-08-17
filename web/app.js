@@ -93,10 +93,10 @@ const ACTIONS = [
 
 const state = {
   sessionId: localStorage.getItem("verbo_sid") || "",
-  // Язык: если пользователь выбирал вручную — берём его выбор; иначе язык
-  // задаёт активная школа через /api/bootstrap (data.language).
-  lang: localStorage.getItem("verbo_lang") || "en",
-  langLocked: !!localStorage.getItem("verbo_lang"),
+  // Язык интерфейса задаёт активная школа через /api/bootstrap (data.language).
+  // Значение ниже — временное, до ответа сервера. Каждый деплой = один язык,
+  // поэтому старый ручной выбор (localStorage) больше не учитываем.
+  lang: "en",
   services: [],
   busy: false,
 };
@@ -443,8 +443,8 @@ async function bootstrap() {
     localStorage.setItem("verbo_sid", data.session_id);
     state.services = data.services || [];
 
-    // Язык из конфига школы — если пользователь не выбирал вручную.
-    if (!state.langLocked && data.language && I18N[data.language]) {
+    // Язык интерфейса — всегда из конфига активной школы.
+    if (data.language && I18N[data.language]) {
       state.lang = data.language;
     }
     // Название школы — в бренд и заголовок вкладки.
@@ -538,14 +538,6 @@ function init() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   });
 
-  document.querySelectorAll(".lang__btn").forEach((b) =>
-    b.addEventListener("click", () => {
-      state.lang = b.dataset.lang;
-      state.langLocked = true;
-      localStorage.setItem("verbo_lang", state.lang);
-      applyLang();
-    })
-  );
 
   applyLang(); // мгновенно рисуем кнопки действий и тексты, не дожидаясь сервера
   bootstrap(); // догружает услуги/историю/сессию с сервера
