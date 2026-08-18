@@ -16,7 +16,7 @@
     <!-- Шапка -->
     <header class="topbar">
       <div class="brand">
-        <div class="brand__eyebrow" data-i18n="tagline">Онлайн-школа английского · с 2019</div>
+        <div class="brand__eyebrow" data-i18n="tagline">Online English school · since 2019</div>
         <div class="brand__name">BrightPath English</div>
       </div>
       <div class="topbar__right">
@@ -30,9 +30,9 @@
     <main class="main" id="main">
       <!-- Онбординг (скрывается после первого сообщения) -->
       <section class="hero" id="hero">
-        <h1 class="hero__title" data-i18n="heroTitle">Чем могу помочь?</h1>
+        <h1 class="hero__title" data-i18n="heroTitle">How can I help?</h1>
         <div class="hero__rule" aria-hidden="true"></div>
-        <p class="hero__sub" data-i18n="heroSub">Спросите о ценах, форматах и расписании — или запишитесь на бесплатное пробное занятие.</p>
+        <p class="hero__sub" data-i18n="heroSub">Ask about prices, formats and schedule — or book a free trial lesson.</p>
 
         <!-- Крупные кнопки действий -->
         <div class="actions" id="actions"></div>
@@ -42,7 +42,7 @@
           <div class="card" id="card-services">
             <button class="card__head" data-acc="services">
               <div class="card__label">
-                <span class="card__title" data-i18n="servicesTitle">Услуги и цены</span>
+                <span class="card__title" data-i18n="servicesTitle">Services & pricing</span>
                 <span class="card__meta" id="services-meta"></span>
               </div>
               <span class="card__chev" aria-hidden="true">⌄</span>
@@ -59,7 +59,7 @@
     <!-- Ввод -->
     <footer class="composer">
       <div class="composer__inner">
-        <textarea id="input" rows="1" placeholder="Спросите о ценах или запишитесь на пробное занятие" data-i18n-ph="inputPh"></textarea>
+        <textarea id="input" rows="1" placeholder="Ask about prices or book a trial lesson" data-i18n-ph="inputPh"></textarea>
         <button id="mic" class="mic" data-i18n-title="micTitle" aria-label="Voice input" title="Voice input">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
         </button>
@@ -67,7 +67,7 @@
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
       </div>
-      <div class="composer__hint" data-i18n="disclaimer">Verbo AI · отвечает по базе знаний школы</div>
+      <div class="composer__hint" data-i18n="disclaimer">AI assistant · answers from the school knowledge base</div>
     </footer>
   </div>
 
@@ -75,12 +75,12 @@
   <div class="modal" id="admin-modal" hidden>
     <div class="modal__box">
       <div class="modal__head">
-        <span data-i18n="leadsTitle">Заявки</span>
+        <span data-i18n="leadsTitle">Leads</span>
         <button class="modal__close" id="admin-close" data-i18n-title="closeTitle" aria-label="Close">✕</button>
       </div>
       <div class="modal__body" id="admin-body">
-        <input type="password" id="admin-pass" placeholder="Пароль администратора" data-i18n-ph="passPh" />
-        <button class="btn" id="admin-load" data-i18n="leadsLoad">Показать</button>
+        <input type="password" id="admin-pass" placeholder="Admin password" data-i18n-ph="passPh" />
+        <button class="btn" id="admin-load" data-i18n="leadsLoad">Show</button>
         <div class="admin-status" id="admin-status"></div>
         <div class="admin-table" id="admin-table"></div>
       </div>
