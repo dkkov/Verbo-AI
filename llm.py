@@ -25,11 +25,19 @@ from google.genai import types as gt
 from config import gemini_client, log
 
 
-def with_retry(fn: Callable[[], Any], *, what: str, retries: int = 1) -> Any:
+def _is_transient(err: Exception) -> bool:
+    """Перегрузка/лимит Gemini (503 UNAVAILABLE, 429 RESOURCE_EXHAUSTED, 500) —
+    стоит подождать чуть дольше и повторить, а не сразу падать в заглушку."""
+    s = str(err)
+    return any(t in s for t in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "500"))
+
+
+def with_retry(fn: Callable[[], Any], *, what: str, retries: int = 3) -> Any:
     """
     Выполняет fn(); при исключении делает ещё `retries` попыток.
-    Ошибку логирует и, если все попытки исчерпаны, пробрасывает наверх —
-    вызывающий код сам решает, что показать пользователю.
+    На транзиентных ошибках Gemini (перегрузка/лимит) ждём заметно дольше, чтобы
+    пережить короткий провал бэкенда, а не показать пользователю «technical glitch».
+    Если все попытки исчерпаны — пробрасываем наверх.
     """
     attempt = 0
     while True:
@@ -40,7 +48,9 @@ def with_retry(fn: Callable[[], Any], *, what: str, retries: int = 1) -> Any:
             log.warning("Внешний вызов '%s' упал (попытка %d): %s", what, attempt, e)
             if attempt > retries:
                 raise
-            time.sleep(0.6 * attempt)  # небольшой backoff перед ретраем
+            # Транзиентные — backoff до ~4с (переживаем блип, не вешая чат надолго);
+            # прочие ошибки повторяем быстро.
+            time.sleep((1.3 * attempt) if _is_transient(e) else (0.4 * attempt))
 
 
 def to_contents(messages: list[dict]) -> list:

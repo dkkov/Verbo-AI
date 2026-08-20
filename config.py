@@ -36,10 +36,11 @@ def _optional(name: str, default: str = "") -> str:
 # --- Модель (Google Gemini по API) ------------------------------------------
 # Принимаем GEMINI_API_KEY или GOOGLE_API_KEY (алиас, который понимает и сам SDK).
 GEMINI_API_KEY = _require("GEMINI_API_KEY", "GOOGLE_API_KEY")
-# Основная модель для ответов пользователю. Псевдоним *-latest автоматически
-# указывает на актуальную flash-модель и не ломается при снятии старых версий
-# с поддержки (gemini-2.5-flash, например, уже отдаёт 404 новым ключам).
-MODEL_MAIN = _optional("GEMINI_MODEL_MAIN", "gemini-flash-latest")
+# Основная модель для ответов пользователю. Пиним конкретную версию: псевдоним
+# gemini-flash-latest периодически отдаёт 503 «high demand» (перегрузка бэкенда),
+# и тогда каждый ответ падает в аварийную заглушку. gemini-3.6-flash стабильнее и
+# держит отдельную квоту бесплатного тарифа. Переопределяется через env при желании.
+MODEL_MAIN = _optional("GEMINI_MODEL_MAIN", "gemini-3.6-flash")
 # Дешёвая быстрая модель для роутера, судьи и извлечения профиля.
 MODEL_CHEAP = _optional("GEMINI_MODEL_CHEAP", "gemini-flash-lite-latest")
 
