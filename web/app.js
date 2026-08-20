@@ -195,10 +195,14 @@ async function send() {
   addMessage("user", text);
 
   const typing = addTyping();
+  // Чат делает несколько вызовов Gemini за ответ (роутер → ответ → самопроверка),
+  // и на бесплатном Render обычный ответ спокойно занимает 8–12с. Порог держим на
+  // 14с, чтобы «waking up» показывалось только на настоящем холодном старте, а не
+  // на каждом нормальном (просто небыстром) ответе.
   const wakeTimer = setTimeout(() => {
     const b = typing.querySelector(".bubble");
     if (b) b.textContent = I18N[state.lang].waking;
-  }, 7000);
+  }, 14000);
 
   try {
     const res = await fetch("/api/chat", {
